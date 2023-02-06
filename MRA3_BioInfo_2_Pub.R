@@ -1,6 +1,6 @@
 #
 #	  MRA3_BioInfo_2_Pub.R
-#     Copyright (C) 2022  Jean-Pierre BORG
+#     Copyright (C) 2022, 2023  Jean-Pierre BORG
 #
 #	  R software used to write the article to publish in BioInformatics. 
 #	  The files to download concerning figures 4, 5 and SI, along with their URL, are indicated in the code.
@@ -507,16 +507,15 @@ MatrTh2			<- abs(MatrTh)
 diag(MatrTh2)	<- 0
 
 nbRows			<- sum(ifelse(MatrTh2>0, 1, 0))		# Number of edges of this network
-DessMAP			<- matrix(nrow=nbRows+1, ncol=4)	# Matrix csv used by Cytoscape to draw the network
+DessMAP			<- matrix(nrow=nbRows, ncol=4)		# Matrix csv used by Cytoscape to draw the network
 nodeNames		<- c("MKKK(1)", "MKKK-PP(2)", "MKK(3)", "MKK-PP(4)", "MAPK(5)", "MAPK-PP(6)")	# Name of the nodes = their number (default)
 ColNames		<- c("Source", "Target", "Interaction", "Value")		# The first line corresponds to the names
 													# Source,target : name of the corresponding nodes
 													# Interaction	: "d" (direct), "r" (reverse), "fp" (false positive), "fn" (false negative)
 													# Value : value associated with the edge
 colnames(DessMAP)	<- ColNames
-DessMAP[1,]		<-	ColNames												
-													
-iSol			<- 1								# Index of the row added in DessMAP
+
+iSol			<- 0								# Index of the row added in DessMAP
 for (iRow in 1:NBN) {
 	Col <- 	1:NBN
 	Col <-	Col[-iRow]
@@ -536,8 +535,8 @@ for (iRow in 1:NBN) {
 	}	# iCol
 }		# iRow	
 
-write.csv(DessMAP, paste(vRoot, "MRA3.csv", sep=""))	# File used by Cytoscape v 3.9.1 to draw the figure 1a (import network from file)
-														# First, we have to delete the first row, the first column and the quotation marks
+write.csv(DessMAP, paste(vRoot, "MRA3.csv", sep=""), quote=FALSE)	
+														# File used by Cytoscape v 3.9.1 to draw the figure 1a (import network from file)
 														# Use style "MRA_styles.xml"
 														# The picture is exported as "Fig1a_MRA3.pdf" and converted to "Fig1a_MRA3.png" (600 dpi) by Inkscape v 1.2.
 														
@@ -629,10 +628,12 @@ for (iPert in c(1:NBP)) {
 }			# Loop on iPert
 	
 NomFic 	<- paste(vRoot, "Fig2a_MRA3.pdf", sep="")
-pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
+pdf(file=NomFic, height=6, width=6) 					# Sizes default to 7
 
-plot (Perturbs[2:13], ErrorQ[2:13], xlim=c(0.3, 1.8), ylim=c(-0.1,4), main="Error Cc vs. Th", type="l", col="blue", xlab="Perturbation %", ylab="Error", xaxt = "n")
-axis(1, at= seq(0.5, 1.5, by=0.5), labels= c("-50", "0", "+50"))
+#	par(bg="grey")		# to modify background color
+#plot (Perturbs[2:13], ErrorQ[2:13], xlim=c(0.3, 1.8), ylim=c(-0.1,4), main="Error Cc vs. Th", type="l", col="blue", xlab="Perturbation %", ylab="Error", xaxt = "n", axes=TRUE, bty="n")
+plot (Perturbs[2:13], ErrorQ[2:13], xlim=c(0.3, 1.8), ylim=c(-0.1,4), main="Error Cc vs. Th", type="b", col="blue", xlab="Perturbation %", ylab="Error", xaxt="n", axes=TRUE, bty="l")
+axis(1, at= seq(0.5, 1.5, by=0.5), labels= c("-50", "0", "+50"))		# vs types ="l"
  
 segments(x0 = 0, y0 = ErrorQ[3],  x1 = Perturbs[3], y1 = ErrorQ[3], col = "darkgrey", lty="dashed") 
 segments(x0 = Perturbs[3], y0 = -0.1, x1 = Perturbs[3], y1 = ErrorQ[3], col = "darkgrey", lty="dashed") 
@@ -660,7 +661,7 @@ NBN 		<- 6								# Number of nodes
 Perturbs 	<- c(0.5, 0.7, 0.9, 0.99, 1.01, 1.1, 1.3, 1.5)					# 8 perturbations
 PercentPert	<- c("-50", "-30", "-10", "-1", "+1", "+10", "+30", "+50")		# Percentages of perturbation
 NBP			<- length(Perturbs)
-Noises		<-	c(0.002, 0.005, 0.01)			# Noise  levels
+Noises		<-	c(0.001, 0.005, 0.01)			# Noise  levels
 NBT			<- length(Noises)
 
 NBD			<-	100								# Number of random draws
@@ -761,18 +762,22 @@ matrN5.df	<- data.frame(Pert=1:8, mean=ErrMoyLn[2, 1:8],  lower=ErrMoyLn[2, 1:8]
 matrN10.df	<- data.frame(Pert=1:8, mean=ErrMoyLn[3, 1:8],  lower=ErrMoyLn[3, 1:8]-ErrSdLn[3, 1:8],   upper=ErrMoyLn[3, 1:8]+ErrSdLn[3, 1:8], Coef = "k = 0.01")
 
 NomFic 	<- paste(vRoot, "Fig2b_MRA3.pdf", sep="")
-pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
+pdf(file=NomFic, height=6, width=6) 					# Sizes default to 7
 
 Titre		<- "Ln (1+Err) as a function of the perturbation"			# Title of the figure
+szLBar		<- 7				# Size of the bars  3
+spLBar		<- 0.25				# Space between the bars  0.15
+szEBar		<- 0.1				# Size of the error bars
 ggplot() + 
-	geom_linerange(data=matrN2.df,   aes(x=Pert, ymin=0, ymax=mean), size=3, color="blue")+ 
-	geom_errorbar (data=matrN2.df,   aes(x=Pert, ymin=lower, ymax=upper), color = "black", width = 0.05)+
-	geom_linerange(data=matrN5.df,   aes(x=Pert+0.15, ymin=0, ymax=mean), size=3, color="yellow")+ 
-	geom_errorbar (data=matrN5.df,   aes(x=Pert+0.15, ymin=lower, ymax=upper), color = "black", width = 0.05)+
-	geom_linerange(data=matrN10.df,  aes(x=Pert+0.3, ymin=0, ymax=mean), size=3, color="red")+ 
-	geom_errorbar (data=matrN10.df,  aes(x=Pert+0.3, ymin=lower, ymax=upper), color = "black", width = 0.05)+
+	geom_linerange(data=matrN2.df,   aes(x=Pert, 			ymin=0, ymax=mean), size=szLBar, color="blue")+ 
+	geom_errorbar (data=matrN2.df,   aes(x=Pert, 			ymin=lower, ymax=upper), color = "black", width = szEBar)+
+	geom_linerange(data=matrN5.df,   aes(x=Pert+spLBar,		ymin=0, ymax=mean), size=szLBar, color="yellow")+ 
+	geom_errorbar (data=matrN5.df,   aes(x=Pert+spLBar,		ymin=lower, ymax=upper), color = "black", width = szEBar)+
+	geom_linerange(data=matrN10.df,  aes(x=Pert+2*spLBar, 	ymin=0, ymax=mean), size=szLBar, color="red")+ 
+	geom_errorbar (data=matrN10.df,  aes(x=Pert+2*spLBar, 	ymin=lower, ymax=upper), color = "black", width = szEBar)+
 	scale_colour_manual(name="Coef", values=c("k = 0.002"="blue", "k = 0.005"="yellow", "k = 0.01"="red"))+
-	labs(title=Titre, x="Perturbation (%)", y="Ln (1+Err)") + scale_x_continuous(breaks=1:8+0.15, labels=PercentPert)
+	labs(title=Titre, x="\nPerturbation (%)", y="Ln (1+Err)") + scale_x_continuous(breaks=1:8+spLBar, labels=PercentPert)+
+	theme(text = element_text(size = 14)) 
 		   
 dev.off()
 #	To get "Fig2b_MRA3.png", we have to combine this file with "Legende.svg" (Inkscape)
@@ -803,6 +808,8 @@ NBSC		<- length(ScoreTests)				# Number of scores
 MatrThDig	<- array(dim=c(NBN, NBN))			# Theoretical matix "r", digitalized (-1, 0, 1)
 Score		<- array(dim=c(NBSC, NBM, NBT))		# Scores measured
 dimnames(Score)	<- list(ScoreTests, Methods, Noises)
+DistM 			<- array(0, dim=c(NBM, NBT))	# Distance to the first bisecting line of the point (Se, 1-Sp)
+dimnames(DistM) <- list(Methods, Noises)
 
 XMesNP		<- array(dim=c(NBN))				# Abundance of the tested product (protein, gene ...) WITHOUT perturbation, WITH noise = abundance measured
 XMesP		<- array(dim=c(NBN, NBN))			# Abundance of the tested product (protein, gene ...) WITH perturbation, WITH noise  = abundance measured
@@ -962,65 +969,142 @@ for (iTest in c(1:NBT)) {						# Noise level
 	}		# Loop on iRow
 }			# Loop on iTest
 
+
 #		Informations for the X axis
 
-NameX	<- 	c(1:(NBN*NBN))						# 1,2,... 36
-NameX	<- 	NameX %% NBN	
-NameX	<-	ifelse(NameX == 0, NBN, NameX)		# 1,2..6,1,2..6 ... 6
-Diago	<-	seq(1, 36, by=7)					# elements belonging to the diagonal
-NameX	<-	NameX[-Diago]						# delete them
-cNameX	<-	matrix (as.character(NameX), nrow=NBN-1)
-cNameX	<- 	rbind(cNameX, rep(" ",NBN))			# add a separation between the edges
-DName	<-	as.vector(cNameX)					# Names of the targets of the edges
 OName	<-	"MKKK (1)             MKKK-PP (2)               MKK (3)                 MKK-PP (4)               MAPK (5)                 MAPK-PP (6)"
 												# Names of the origins of the edges
 Breaks	<-  c(1:(NBN*NBN))
 
-
+		
 #		Fig 3a	: noise level k = 0.1%
 
 VMin	<- min(ValMinBP[ , ,1], ValMin3[ , ,1], ValMin5[ , ,1], na.rm=TRUE)		# Minimum on the Y axis
 VMax	<- max(ValMaxBP[ , ,1], ValMax3[ , ,1], ValMax5[ , ,1], na.rm=TRUE)		# Maximum on the Y axis
 
-ValMeanBP[ , ,1]	<- ifelse (is.na(ValMeanBP[ , ,1]),	 VMin, ValMeanBP[ , ,1])	# Replace the values on the diagonal (which were NA) with VMin
-ValMinBP [ , ,1]	<- ifelse (is.na(ValMinBP[ , ,1]), 	 VMin, ValMinBP	[ , ,1])
-ValMaxBP [ , ,1]	<- ifelse (is.na(ValMaxBP[ , ,1]),	 VMin, ValMaxBP	[ , ,1])
-
-ValMean3[ , ,1]		<- ifelse (is.na(ValMean3[ , ,1]),	 VMin, ValMean3[ , ,1])
-ValMin3 [ , ,1]		<- ifelse (is.na(ValMin3[ , ,1]), 	 VMin, ValMin3 [ , ,1])
-ValMax3 [ , ,1]		<- ifelse (is.na(ValMax3[ , ,1]),	 VMin, ValMax3 [ , ,1])
-
-ValMean5[ , ,1]		<- ifelse (is.na(ValMean5[ , ,1]),	 VMin, ValMean5[ , ,1])
-ValMin5 [ , ,1]		<- ifelse (is.na(ValMin5[ , ,1]), 	 VMin, ValMin5 [ , ,1])
-ValMax5 [ , ,1]		<- ifelse (is.na(ValMax5[ , ,1]),	 VMin, ValMax5 [ , ,1])
-
 MatrTh1		<- ifelse (MatrTh == -1, VMin, MatrTh)									# exact values
 
-matrBP.df	<- data.frame(ind=1:(NBN*NBN), name=DName, mean=as.vector(ValMeanBP[ , ,1]), lower=as.vector(ValMinBP[ , ,1]), upper=as.vector(ValMaxBP[ , ,1]))
-matr3.df	<- data.frame(ind=1:(NBN*NBN), name=DName, mean=as.vector(ValMean3[ , ,1]),  lower=as.vector(ValMin3[ , ,1]),  upper=as.vector(ValMax3[ , ,1]))
-matr5.df	<- data.frame(ind=1:(NBN*NBN), name=DName, mean=as.vector(ValMean5[ , ,1]),  lower=as.vector(ValMin5[ , ,1]),  upper=as.vector(ValMax5[ , ,1]))
-matrTh1.df	<- data.frame(ind=1:(NBN*NBN), name=DName, val=as.vector(MatrTh1))
+matrBP.df	<- data.frame(mean=NULL, lower=NULL, upper=NULL)		# To draw figures 3a and 3b
+matr3.df	<- data.frame(mean=NULL, lower=NULL, upper=NULL)
+matr5.df	<- data.frame(mean=NULL, lower=NULL, upper=NULL)
+matrTh1.df	<- data.frame(val=NULL)
+
+for (iMat in 1:NBN) {
+	matrBP.tmp.df	<- data.frame(name=1:NBN, mean=as.vector(ValMeanBP[1:NBN,iMat,1]), lower=as.vector(ValMinBP[1:NBN,iMat,1]), upper=as.vector(ValMaxBP[1:NBN,iMat,1]))
+	matrBP.tmp.df	<- matrBP.tmp.df[-iMat, ]
+	matrBP.df		<- rbind(matrBP.df, matrBP.tmp.df)
+	matrBP.tmp.df	<- data.frame(name=" ", mean=VMin, lower=VMin, upper=VMin)
+	matrBP.df		<- rbind(matrBP.df, matrBP.tmp.df)
+
+	matr3.tmp.df	<- data.frame(name=1:NBN, mean=as.vector(ValMean3[1:NBN,iMat,1]), lower=as.vector(ValMin3[1:NBN,iMat,1]), upper=as.vector(ValMax3[1:NBN,iMat,1]))
+	matr3.tmp.df	<- matr3.tmp.df[-iMat, ]
+	matr3.df		<- rbind(matr3.df, matr3.tmp.df)
+	matr3.tmp.df	<- data.frame(name=" ", mean=VMin, lower=VMin, upper=VMin)
+	matr3.df		<- rbind(matr3.df, matr3.tmp.df)
+
+	matr5.tmp.df	<- data.frame(name=1:NBN, mean=as.vector(ValMean5[1:NBN,iMat,1]), lower=as.vector(ValMin5[1:NBN,iMat,1]), upper=as.vector(ValMax5[1:NBN,iMat,1]))
+	matr5.tmp.df	<- matr5.tmp.df[-iMat, ]
+	matr5.df		<- rbind(matr5.df, matr5.tmp.df)
+	matr5.tmp.df	<- data.frame(name=" ", mean=VMin, lower=VMin, upper=VMin)
+	matr5.df		<- rbind(matr5.df, matr5.tmp.df)
+	
+	matrTh1.tmp.df	<- data.frame(name=1:NBN, val=as.vector(MatrTh1[1:NBN,iMat]))
+	matrTh1.tmp.df	<- matrTh1.tmp.df[-iMat, ]
+	matrTh1.df		<- rbind(matrTh1.df, matrTh1.tmp.df)
+	matrTh1.tmp.df	<- data.frame(name=" ", val=VMin)
+	matrTh1.df		<- rbind(matrTh1.df, matrTh1.tmp.df)
+}
+
+matrBP.df	<- cbind(ind=1:(NBN*NBN), matrBP.df)
+matr3.df	<- cbind(ind=1:(NBN*NBN), matr3.df)
+matr5.df	<- cbind(ind=1:(NBN*NBN), matr5.df)
+matrTh1.df	<- cbind(ind=1:(NBN*NBN), matrTh1.df)
+
 
 NomFic 	<- paste(vRoot, "Fig3a_MRA3.pdf", sep="")
 pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
 
-Titre		<- paste("rij distribution : k = ", 100*Noises[1], "%")					# ri,j distribution
 ggplot()+ 
 	geom_linerange(data=matr3.df,  aes(x=ind,	   ymin=lower, ymax=upper), size=0.9, color="blue")+
 	geom_linerange(data=matr5.df,  aes(x=ind+0.25, ymin=lower, ymax=upper), size=0.9, color="red")+
 	geom_linerange(data=matrBP.df, aes(x=ind-0.25, ymin=lower, ymax=upper), size=0.9, color="black")+
 	geom_hline(yintercept=0, size=1, color="orange")+
-	geom_point(data=matrTh1.df, aes(x=ind, y=val), size=0.7, color="green") +
-	ylim(VMin+0.3, VMax+0.3)+														# remove the points corresponding to NA (NA replaced by VMin for computations)								
-	labs(title=Titre, x="", y="CI 95%") + scale_x_continuous(breaks=Breaks, labels=DName)+	# y = "IC 95%" for ri,j
-	xlab(OName)
-	
+	geom_point(data=matrTh1.df, aes(x=ind, y=val), size=1.8, color="green") +		#vs. 0.9
+	ylim(VMin+0.003, VMax+0.3)+														# remove the points corresponding to NA (NA replaced by VMin for computations)								
+	labs(title="", x="", y="") + scale_x_continuous(breaks=Breaks)+
+	theme(axis.text=element_text(size=12))
+
 dev.off()
 #	To get "Fig3a_MRA3.png", we have to combine this file with "Legende.svg" (Inkscape)
 
+
+#		Fig 3b	: noise level k = 0.5%
+
+VMin	<- min(ValMinBP[ , ,2], ValMin3[ , ,2], ValMin5[ , ,2], na.rm=TRUE)		# Minimum on the Y axis
+VMax	<- max(ValMaxBP[ , ,2], ValMax3[ , ,2], ValMax5[ , ,2], na.rm=TRUE)		# Maximum on the Y axis
+
+MatrTh1		<- ifelse (MatrTh == -1, VMin, MatrTh)									# exact values
+
+matrBP.df	<- data.frame(mean=NULL, lower=NULL, upper=NULL)		# To draw figures 3a and 3b
+matr3.df	<- data.frame(mean=NULL, lower=NULL, upper=NULL)
+matr5.df	<- data.frame(mean=NULL, lower=NULL, upper=NULL)
+matrTh1.df	<- data.frame(val=NULL)
+
+for (iMat in 1:NBN) {
+	matrBP.tmp.df	<- data.frame(name=1:NBN, mean=as.vector(ValMeanBP[1:NBN,iMat,2]), lower=as.vector(ValMinBP[1:NBN,iMat,2]), upper=as.vector(ValMaxBP[1:NBN,iMat,2]))
+	matrBP.tmp.df	<- matrBP.tmp.df[-iMat, ]
+	matrBP.df		<- rbind(matrBP.df, matrBP.tmp.df)
+	matrBP.tmp.df	<- data.frame(name=" ", mean=VMin, lower=VMin, upper=VMin)
+	matrBP.df		<- rbind(matrBP.df, matrBP.tmp.df)
+
+	matr3.tmp.df	<- data.frame(name=1:NBN, mean=as.vector(ValMean3[1:NBN,iMat,2]), lower=as.vector(ValMin3[1:NBN,iMat,2]), upper=as.vector(ValMax3[1:NBN,iMat,2]))
+	matr3.tmp.df	<- matr3.tmp.df[-iMat, ]
+	matr3.df		<- rbind(matr3.df, matr3.tmp.df)
+	matr3.tmp.df	<- data.frame(name=" ", mean=VMin, lower=VMin, upper=VMin)
+	matr3.df		<- rbind(matr3.df, matr3.tmp.df)
+
+	matr5.tmp.df	<- data.frame(name=1:NBN, mean=as.vector(ValMean5[1:NBN,iMat,2]), lower=as.vector(ValMin5[1:NBN,iMat,2]), upper=as.vector(ValMax5[1:NBN,iMat,2]))
+	matr5.tmp.df	<- matr5.tmp.df[-iMat, ]
+	matr5.df		<- rbind(matr5.df, matr5.tmp.df)
+	matr5.tmp.df	<- data.frame(name=" ", mean=VMin, lower=VMin, upper=VMin)
+	matr5.df		<- rbind(matr5.df, matr5.tmp.df)
+	
+	matrTh1.tmp.df	<- data.frame(name=1:NBN, val=as.vector(MatrTh1[1:NBN,iMat]))
+	matrTh1.tmp.df	<- matrTh1.tmp.df[-iMat, ]
+	matrTh1.df		<- rbind(matrTh1.df, matrTh1.tmp.df)
+	matrTh1.tmp.df	<- data.frame(name=" ", val=VMin)
+	matrTh1.df		<- rbind(matrTh1.df, matrTh1.tmp.df)
+}
+
+matrBP.df	<- cbind(ind=1:(NBN*NBN), matrBP.df)
+matr3.df	<- cbind(ind=1:(NBN*NBN), matr3.df)
+matr5.df	<- cbind(ind=1:(NBN*NBN), matr5.df)
+matrTh1.df	<- cbind(ind=1:(NBN*NBN), matrTh1.df)
+
+
+NomFic 	<- paste(vRoot, "Fig3b_MRA3.pdf", sep="")
+pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
+
+Titre		<- paste("rij distribution : k = ", 100*Noises[2], "%")					# ri,j distribution
+ggplot()+ 
+	geom_linerange(data=matr3.df,  aes(x=ind,	   ymin=lower, ymax=upper), size=0.9, color="blue")+
+	geom_linerange(data=matr5.df,  aes(x=ind+0.25, ymin=lower, ymax=upper), size=0.9, color="red")+
+	geom_linerange(data=matrBP.df, aes(x=ind-0.25, ymin=lower, ymax=upper), size=0.9, color="black")+
+	geom_hline(yintercept=0, size=1, color="orange")+
+	geom_point(data=matrTh1.df, aes(x=ind, y=val), size=1.8, color="green") +		# vs 0.9
+	ylim(VMin+0.003, VMax+0.3)+														# remove the points corresponding to NA (NA replaced by VMin for computations)								
+#	labs(title=Titre, x="", y="CI 95%") + scale_x_continuous(breaks=Breaks, labels=DName)+	# y = "IC 95%" for ri,j
+	labs(title="", x="", y="") + scale_x_continuous(breaks=Breaks, labels=matrBP.df$name)+
+	xlab(OName)+
+	theme(axis.text=element_text(size=12))
+	
+dev.off()
+
+
 	
 ###		
-###		Remark : there was an error on the X axis of Fig 3 a and b, concerning the direction of the edges. This error is corrected above and the old version is as follows (comments).
+###		Remark : there was an error on the X axis of Fig 3 a and b, concerning the direction of the edges (initial version of the document). 
+###		This error is corrected above and the old version is as follows (comments).
 ###		
 ###		ConvertON	<- c(30,7,13,19,25,31,1,6,14,20,26,32,2,8,12,21,27,33,3,9,15,18,28,34,4,10,16,22,24,35,5,11,17,23,29,36)
 ###		Convert		<- c(7,13,19,25,31,8,2,14,20,26,32,15,3,9,21,27,33,22,4,10,16,28,34,29,5,11,17,23,35,1,6,12,18,24,30,36)	
@@ -1142,19 +1226,19 @@ for (iTest in c(1:NBT)) {						# Noise level
 		}	# Method LSE-CI
 
 		if (Method == "LASSO") {				# Digitalization = sign of the result	-- 3 replicates  -- automatic choice of lambda
-			for (iRow in 1:NBN) {
+			rLasso[ , ]	<- 0
+			for (iMat in 1:NBN) {
 				col 	<- 1:NBN
-				col 	<- col[-iRow]
+				col 	<- col[-iMat]
 
-				cv_model 	<- cv.glmnet(gX3[ , ,iRow,iTest], gY3[ ,iRow,iTest], alpha = 1)	# Fit lasso regression model using k-fold cross-validation
+				cv_model 	<- cv.glmnet(gX3[ , ,iMat,iTest], gY3[ ,iMat,iTest], alpha = 1)	# Fit lasso regression model using k-fold cross-validation
 				best_lambda <- cv_model$lambda.min
-				best_model 	<- glmnet(gX3[ , ,iRow,iTest], gY3[ ,iRow,iTest], alpha = 1, lambda = best_lambda)		# View coefficients of best model
+				best_model 	<- glmnet(gX3[ , ,iMat,iTest], gY3[ ,iMat,iTest], alpha = 1, lambda = best_lambda)		# View coefficients of best model
 				rL			<- coef(best_model)
-				rLasso[iRow, iRow] 	<- -1						
-				rLasso[col, iRow]	<- rL[2:NBN, 1]
+				rLasso[iMat, col]	<- rL[2:NBN, 1]		# we get the matrix "r"	
 			}
-			rLasso 		<- t(rLasso)		# we get the matrix "r"	
-			rLasso		<- ifelse (is.na(rLasso), 0, rLasso)
+			diag(rLasso)	<- -1
+			rLasso			<- ifelse (is.na(rLasso), 0, rLasso)
 				
 			MatrCcDig[]		<- ifelse (rLasso > 0,  1, 0)
 			MatrCcDig[]		<- ifelse (rLasso < 0, -1, MatrCcDig)	
@@ -1162,22 +1246,22 @@ for (iTest in c(1:NBT)) {						# Noise level
 		}	# Method LASSO
 
 		if (Method == "LASSO1") {				# Digitalization = sign of the result	-- 3 replicates  -- Optimization of the hyper-parameters
-			for (iRow in 1:NBN) {
+			rLasso[ , ]	<- 0			
+			for (iMat in 1:NBN) {
 				col 	<- 1:NBN
-				col 	<- col[-iRow]
+				col 	<- col[-iMat]
 
-				cv_model 	<- cv.glmnet(gX3[ , ,iRow,iTest], gY3[ ,iRow,iTest], alpha = 1, intercept = FALSE, nfolds=18)	# Fit lasso regression model using k-fold cross-validation
+				cv_model 	<- cv.glmnet(gX3[ , ,iMat,iTest], gY3[ ,iMat,iTest], alpha = 1, intercept = FALSE, nfolds=18)	# Fit lasso regression model using k-fold cross-validation
 				rL <- coef(cv_model, cv_model$lambda.1se)
-				rLasso[iRow, iRow] 	<- -1						
-				rLasso[col, iRow]	<- rL[2:NBN, 1]
+				rLasso[iMat, col]	<- rL[2:NBN, 1]		# we get the matrix "r"	
 			}
-			rLasso 		<- t(rLasso)		# we get the matrix "r"	
+			diag(rLasso)	<- -1
 			rLasso		<- ifelse (is.na(rLasso), 0, rLasso)
 				
 			MatrCcDig[]		<- ifelse (rLasso > 0,  1, 0)
 			MatrCcDig[]		<- ifelse (rLasso < 0, -1, MatrCcDig)	
 			Score[ ,iMeth,iTest]	<- Benchmark2(MatrCcDig, MatrThDig)
-		}	# Method LASSO
+		}	# Method LASSO1
 		
 		if (Method == "TLR") {
 			ValCc3[ , ,iTest]	<- ifelse (is.na(ValCc3[ , ,iTest]), 0, ValCc3[ , ,iTest])
@@ -1236,6 +1320,9 @@ for (iTest in c(1:NBT)) {						# Noise level
 			MatrCcDig	<-	ifelse (MatrCcDig < 0, -1, MatrCcDig)
 			Score[ ,iMeth,iTest]	<- Benchmark2(MatrCcDig, MatrThDig)	
 		}	# Methods STEP
+		
+		DistM[iMeth,iTest]		<- Score["Sensib",iMeth,iTest] - (1-Score["Specif",iMeth,iTest])
+		cat(Methods[iMeth], " Noise ", Noises[iTest], " DistM ", DistM[iMeth,iTest], "\n")
 	}	# Loop on iMeth
 	
 	write.csv(Score[ , ,iTest], 	paste(vRoot, "Fig3c_", Noises[iTest], ".csv", sep=""))	
@@ -1355,16 +1442,15 @@ diag(Solution)	<- 0						# the diagonal is set to 0 (no auto-interaction in this
 #	2/ Drawing of the solution
 
 nbRows			<- sum(ifelse(Solution>0, 1, 0))	# Number of edges of this network
-DessMAP			<- matrix(nrow=nbRows+1, ncol=4)	# Matrix csv used by Cytoscape to draw the network
+DessMAP			<- matrix(nrow=nbRows, ncol=4)		# Matrix csv used by Cytoscape to draw the network
 nodeNames		<- as.character (seq(1, NBN, by=1))	# Name of the nodes = their number (default)
 ColNames		<- c("Source", "Target", "Interaction", "Value")		# The first line corresponds to the names
 													# Source,target : name of the corresponding nodes
 													# Interaction	: "d" (direct), "r" (reverse), "fp" (false positive), "fn" (false negative)
 													# Value : value associated with the edge
 colnames(DessMAP)	<- ColNames
-DessMAP[1,]		<-	ColNames	
 
-iSol			<- 1								# Index of the row added in DessMAP
+iSol			<- 0								# Index of the row added in DessMAP
 for (iRow in 1:NBN) {
 	Col <- 	1:NBN
 	Col <-	Col[-iRow]
@@ -1379,8 +1465,8 @@ for (iRow in 1:NBN) {
 	}	# iCol
 }		# iRow	
 
-write.csv(DessMAP, paste(vRoot, "silico_10_1_Sol.csv", sep=""))	# File used by Cytoscape v 3.9.1 to draw the figure 1a (import network from file)
-														# First, we have to delete the first row, the first column and the quotation marks
+write.csv(DessMAP, paste(vRoot, "silico_10_1_Sol.csv", sep=""), quote=FALSE)	
+														# File used by Cytoscape v 3.9.1 to draw the figure 1a (import network from file)
 														# Use style "MRA_styles.xml"
 														# The picture is exported as "***.pdf" and converted to "***.png" (600 dpi) by Inkscape v 1.2.
 
@@ -1426,16 +1512,15 @@ Results		<-	Benchmark(MatrCcDig, Solution)
 names(Results)	<- ResultNames
 												
 nbRows			<- Results["TP"] + Results["FP"] + Results["FN"]	# Number of edges of this network
-DessMAP			<- matrix(nrow=nbRows+1, ncol=4)	# Matrix csv used by Cytoscape to draw the network
+DessMAP			<- matrix(nrow=nbRows, ncol=4)		# Matrix csv used by Cytoscape to draw the network
 nodeNames		<- as.character (seq(1, NBN, by=1))	# Name of the nodes = their number (default)
 ColNames		<- c("Source", "Target", "Interaction", "Value")		# The first line corresponds to the names
 													# Source,target : name of the corresponding nodes
 													# Interaction	: "d" (direct), "r" (reverse), "fp" (false positive), "fn" (false negative)
 													# Value : value associated with the edge
 colnames(DessMAP)	<- ColNames
-DessMAP[1,]		<-	ColNames	
 
-iSol			<- 1								# Index of the row added in DessMAP
+iSol			<- 0								# Index of the row added in DessMAP
 for (iRow in 1:NBN) {
 	Col <- 	1:NBN
 	Col <-	Col[-iRow]
@@ -1469,8 +1554,8 @@ for (iRow in 1:NBN) {
 	}	# iCol
 }		# iRow	
 
-write.csv(DessMAP, paste(vRoot, "silico_10_1_Res.csv", sep=""))	# File used by Cytoscape v 3.9.1 to draw the figure 1a (import network from file)
-														# First, we have to delete the first row, the first column and the quotation marks
+write.csv(DessMAP, paste(vRoot, "silico_10_1_Res.csv", sep=""), quote=FALSE)
+														# File used by Cytoscape v 3.9.1 to draw the figure 1a (import network from file)
 														# Use style "MRA_styles.xml"
 														# The picture is exported as "***.pdf" and converted to "***.png" (600 dpi) by Inkscape v 1.2.												
 		
@@ -1496,10 +1581,10 @@ for (iSize in 1:NBS) {
 	pY   		<- array(dim=c(NBN-1))						# row
 	gX   		<- array(dim=c(NBK*(NBN-1), NBN-1, NBN))	# row (iRow), column (iCol), matrix number (iMat)
 	gY   		<- array(dim=c(NBK*(NBN-1), NBN))			# row,  matrix number
-	gXKO 		<- array(dim=c(NBN-1, NBN-1, NBN))			# gX matrix truncated so as to keep the values KO only
-	gYKO 		<- array(dim=c(NBN-1, NBN))					# gY matrix truncated so as to keep the values KO only
-	gXKD 		<- array(dim=c(NBN-1, NBN-1, NBN))			# gX matrix truncated so as to keep the values KD only
-	gYKD 		<- array(dim=c(NBN-1, NBN))					# gY matrix truncated so as to keep the values KD only
+	gXO 		<- array(dim=c(NBN-1, NBN-1, NBN))			# gX matrix truncated so as to keep the values KO only
+	gYO 		<- array(dim=c(NBN-1, NBN))					# gY matrix truncated so as to keep the values KO only
+	gXD 		<- array(dim=c(NBN-1, NBN-1, NBN))			# gX matrix truncated so as to keep the values KD only
+	gYD 		<- array(dim=c(NBN-1, NBN))					# gY matrix truncated so as to keep the values KD only
 		
 	MatrCc		<- array(dim=c(NBN, NBN))			# "r" matrix computed (according to method MRA, TLR, STEP or LASSO)
 	MatrPVal	<- array(dim=c(NBN, NBN))			# p-value
@@ -1570,8 +1655,8 @@ for (iSize in 1:NBS) {
 			
 				gX[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq), ,iMat]  	<- pX[ , ]
 				gY[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq),iMat]   	<- pY[ ]
-			}
-		}
+			}		# Loop on iMat
+		}			# Loop on iPaq
 	
 		gXD 	<- gX[1 : (NBN-1), , ] 					# KnockDown
 		gYD		<- gY[1 : (NBN-1), ]	
@@ -1752,7 +1837,7 @@ cat("END ", as.character(Sys.time()), "\n")
 
 
 #
-#	Figure 5 : Existing knowledge impact on regression methods
+#	Figure 8 : Existing knowledge impact on regression methods		(ex Fig. 5)
 #	Uses Dream Challenge 4 networks - see fig.4 for details about the differnt files.
 #
 
@@ -1770,13 +1855,12 @@ NBSC		<- length(ScoreTests)				# Number of scores
 
 NBK			<- 2								# NBK corresponds to the number of perturbation types (KO or KD)
 
-Moy				<- c("%ZF", "Mean", "sd")			# Averages to display
+Moy				<- c("%ZF", "Mean", "sd")			# Mean values to display
 matZFSens.df 	<- data.frame(0, 0, 0)				# Data Frame to use gplot
 matZFSpec.df 	<- data.frame(0, 0, 0)				# Data Frame to use gplot
 
 
-#for (iSize in 1:NBS) {
-iSize=1
+for (iSize in 1:NBS) {
 	NBN			<- Sizes[iSize]						# Number of nodes
 	NBD			<- vZF$Draws[iSize]					# Number of draws for each %ZF
 	
@@ -1969,7 +2053,7 @@ iSize=1
 					}	# TLR method	
 			
 					if (Method == "LASSO") { 					#	LASSO's method, automatic choice of Lambda
-						MatrCc[,] <- 0		# Initialization
+						MatrCc[ , ] <- 0		# Initialization
 						for (iMat in 1:NBN) {
 							col <- 1:NBN
 							col <- col[-iMat]
@@ -2076,7 +2160,7 @@ iSize=1
 			cat("insilico_Size", NBN, "_", iFic, " Method ", Method, " %ZF ", nbZF, "\n")
 		}			# Loop on iZF	(% of known zeros)
 	}				# Loop on iFic	(5 files per size)	
-#}					# Loop on iSize (10 or 100 nodes)
+}					# Loop on iSize (10 or 100 nodes)
 
 cat("END ", as.character(Sys.time()), "\n")
 
@@ -2095,17 +2179,21 @@ matZFSens.df$Meth		<- as.factor (matZFSens.df$Meth)
 matZFSens.df$ZF			<- as.factor (matZFSens.df$ZF)
 
 NomFic 	<- paste(vRoot, "Fig5a_Sens10.pdf", sep="")
-pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
+#NomFic 	<- paste(vRoot, "Fig5c_Sens100.pdf", sep="")
+pdf(file=NomFic, height=4, width=4) 					# Sizes default to 7
 
 ggplot(matZFSens.df, aes(x=ZF, y=Sensib, fill=Meth), ylimit=c(0.35,1)) + 
-	geom_boxplot(outlier.colour="red") + 
+	geom_boxplot(outlier.colour="black", outlier.size=0.3) + 
 	labs(title="Sensibility vs. % values forced to 0", x="% values forced to 0", y="Sensibility") +
-    scale_colour_manual(name = "Meth",
-		values = c("TLR" = "green", "LASSO" = "red", "STEP-Fo" = "orange"),
-		labels = c("TLR" = "TLR", "LASSO" = "LASSO", "STEP-Fo" = "STEP-Fo"))
+	theme(legend.position = "none") +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black"))	
+#    scale_colour_manual(name = "Meth",
+#		values = c("TLR" = "green", "LASSO" = "red", "STEP-Fo" = "orange"),
+#		labels = c("TLR" = "TLR", "LASSO" = "LASSO", "STEP-Fo" = "STEP-Fo"))
 		
 dev.off()
-		
+
 
 #
 #	Fig. 5b (iSize = 1)
@@ -2121,14 +2209,19 @@ matZFSpec.df$Meth		<- as.factor (matZFSpec.df$Meth)
 matZFSpec.df$ZF			<- as.factor (matZFSpec.df$ZF)
 
 NomFic 	<- paste(vRoot, "Fig5b_Spec10.pdf", sep="")
-pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
+#NomFic 	<- paste(vRoot, "Fig5d_Spec100.pdf", sep="")
+pdf(file=NomFic, height=4, width=4) 					# Sizes default to 7
 
 ggplot(matZFSpec.df, aes(x=ZF, y=Specif, fill=Meth)) + 
-	geom_boxplot(outlier.colour="red") + 
+	geom_boxplot(outlier.colour="black", outlier.size=0.3) + 
 	labs(title="Specificity vs. % values forced to 0", x="% values forced to 0", y="Specificity") +
-    scale_colour_manual(name = "Meth",
-		values = c("TLR" = "green", "LASSO" = "red", "STEP-Fo" = "orange"),
-		labels = c("TLR" = "TLR", "LASSO" = "LASSO", "STEP-Fo" = "STEP-Fo"))
+	theme(legend.position = "none")	+
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black"))
+	
+#    scale_colour_manual(name = "Meth",
+#		values = c("TLR" = "green", "LASSO" = "red", "STEP-Fo" = "orange"),
+#		labels = c("TLR" = "TLR", "LASSO" = "LASSO", "STEP-Fo" = "STEP-Fo"))
 		
 dev.off()
 
@@ -2166,7 +2259,7 @@ NBFIC		<- 5									# There are 5 files for a given size
 Sizes		<- c(10, 100)							# Nbr of nodes of the network
 NBS			<- length(Sizes) 
 
-Methods		<-  c("MRA-KD", "MRA-KO", "LSE_CI", "LASSO", "TLR", "STEP-Fo", "STEP-Ba", "STEP-Bo")
+Methods		<-  c("MRA-KD", "MRA-KO", "LSE_CI", "LASSO", "TLR", "STEP-Fo", "STEP-Ba", "STEP-Bo", "CLR", "ARACNE", "MRNET")
 NBM			<- length(Methods)						# Number of méthods
 
 vTOP		<- c(0.2, 0.25)							# "top" of the edges to take into account
@@ -2177,7 +2270,8 @@ NBK			<- 2									# NBK corresponds to the number of perturbation types (KO or 
 Seuils		<- seq(0, 1, by=0.05)					# To plot the curves ROC (KO, KD, TLR)
 													# For LASSO's method, we will multiply every value by KLASSO
 NBSeuils	<- length(Seuils)
-KLASSO		<- 0.05									# arbitrary choice., mey be modified if needed
+KLASSO		<- 0.05									# arbitrary choice, to get many dota, may be modified if needed
+KSTEP		<- 3									# arbitrary choice, to get many dota, may be modified if needed
 
 ScoreTests	<-	c("TP", "TN", "FP", "FN", "Se", "Sp")		# Scores to measure (Se = "Sensibility", Sp = "Specificity")
 NBSC		<- length(ScoreTests)					# Number of scores
@@ -2186,8 +2280,12 @@ dimnames(Score)		<- list(ScoreTests, Seuils, Methods, NULL, Sizes)
 
 Pts			<- array(0, dim=c(2, NBM, NBFIC, NBS))			# Spec and Sensib corresponding to the points to draw on the ROC curves (not plotted methods)
 dimnames(Pts)		<- list(c("Se", "Sp"), Methods, NULL, Sizes)
-AuROC		<- array(0, dim=c(NBM, NBFIC, NBS))				# AUROC corresponding to the plotted methods
+AuROC		<- array(0, dim=c(NBM, NBFIC, NBS))				# AUROC corresponding to the plotted methods, computed with roc.area
 dimnames(AuROC)		<- list(Methods, NULL, Sizes)
+AuROCZ		<- array(0, dim=c(NBM, NBFIC, NBS))				# AUROC corresponding to the plotted methods, computed with trapz
+dimnames(AuROCZ)	<- list(Methods, NULL, Sizes)
+PValue		<- array(0, dim=c(NBM, NBFIC, NBS))				# PValue corresponding to the plotted methods (vs. random selection)
+dimnames(PValue)	<- list(Methods, NULL, Sizes)
 
 		
 for (iSize in 1:NBS) {
@@ -2207,10 +2305,10 @@ for (iSize in 1:NBS) {
 	pY   		<- array(dim=c(NBN-1))						# row
 	gX   		<- array(dim=c(NBK*(NBN-1), NBN-1, NBN))	# row (iRow), column (iCol), matrix number (iMat)
 	gY   		<- array(dim=c(NBK*(NBN-1), NBN))			# row,  matrix number
-	gXKO 		<- array(dim=c(NBN-1, NBN-1, NBN))			# gX matrix truncated so as to keep the values KO only
-	gYKO 		<- array(dim=c(NBN-1, NBN))					# gY matrix truncated so as to keep the values KO only
-	gXKD 		<- array(dim=c(NBN-1, NBN-1, NBN))			# gX matrix truncated so as to keep the values KD only
-	gYKD 		<- array(dim=c(NBN-1, NBN))					# gY matrix truncated so as to keep the values KD only
+	gXO 		<- array(dim=c(NBN-1, NBN-1, NBN))			# gX matrix truncated so as to keep the values KO only
+	gYO 		<- array(dim=c(NBN-1, NBN))					# gY matrix truncated so as to keep the values KO only
+	gXD 		<- array(dim=c(NBN-1, NBN-1, NBN))			# gX matrix truncated so as to keep the values KD only
+	gYD 		<- array(dim=c(NBN-1, NBN))					# gY matrix truncated so as to keep the values KD only
 		
 	MatrCc		<- array(dim=c(NBN, NBN))			# "r" matrix computed (according to method MRA, TLR, STEP or LASSO)
 	MatrPVal	<- array(dim=c(NBN, NBN))			# p-value
@@ -2219,12 +2317,11 @@ for (iSize in 1:NBS) {
 	vMatrCc  	<- vector(length = NBN*NBN)			# MatrCc as a vector (to use roc.area)
 	vSolution	<- vector(length = NBN*NBN)			# Solution as a vector (to use roc.area)	
 	
-#	best_lambda	<- array(dim=c(NBN))				# Lasso hyper parameter
+	best_lambda	<- array(dim=c(NBN))				# Lasso hyper parameter
 	rij 		<- matrix(nrow=1, ncol=NBN-1)		# Intermediate calculation of rij
 	rL 			<- array(dim=c(NBN))				# Result of Lasso method (ie sol. of Yi = Ai * Xi)
 	
 	for (iFic in 1:NBFIC) {
-	
 		#	1/ Data reading
 		
 		val			<- paste(vRootDC4, "insilico_size", NBN, "_", iFic, "/insilico_size", NBN, "_", iFic, "_wildtype.tsv", sep="")
@@ -2324,9 +2421,9 @@ for (iSize in 1:NBS) {
 					Form <- paste("gY[ ,",iMat,"]~gX[ , ,",iMat,"]+0")
 					pQ 	 <- lm(as.formula(Form))								# MatrCc contient les p-values associées
 					MatrPVal[iMat,col] 	<- broom::tidy(pQ)$p.value
-					MatrCc [iMat,which(MatrPVal[iMat,] < vPValue)] <- 1
-					MatrCc[iMat, iMat]  <- 0			# The diagonal element is set to 0 instead of -1, because the matrix "Solution" does so.
 				}
+				MatrCc	<- MatrPVal
+				diag(MatrCc)	<- 0
 				MatrCc[is.na(MatrCc)]  <- 0	
 			}	# LSE_CI method	
 	
@@ -2343,12 +2440,12 @@ for (iSize in 1:NBS) {
 			}	# TLR with Linear regression, 2 measures per node		
 			
 #			if (Method == "LASSO") {				# Digitalization = sign of the result	-- 3 replicates  -- automatic choice of lambda
-#				for (iRow in 1:NBN) {
+#				for (iMat in 1:NBN) {
 #					col 	<- 1:NBN
-#					col 	<- col[-iRow]
+#					col 	<- col[-iMat]
 #	
-#					cv_model 	<- cv.glmnet(gX[ , ,iRow], gY[ ,iRow], alpha = 1)	# Fit lasso regression model using k-fold cross-validation
-#					best_lambda [iRow] <- cv_model$lambda.min	
+#					cv_model 	<- cv.glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1)	# Fit lasso regression model using k-fold cross-validation
+#					best_lambda [iMat] <- cv_model$lambda.min	
 #				}
 #			}
 					
@@ -2412,13 +2509,31 @@ for (iSize in 1:NBS) {
 				}		# loop iMat
 			}	# STEP methods
 
+			if (Method == "CLR") {		
+				MI <- build.mim(dataset = rbind(MatR[,,1], MatR[,,2]))	
+				MatrCc  <- clr(MI)
+				diag(MatrCc)  <- 0			# The diagonal element is set to 0 instead of -1, because the matrix "Solution" does so.
+			}	# CLR
+					
+			if (Method == "ARACNE") {		
+				MI <- build.mim(dataset = rbind(MatR[,,1], MatR[,,2]))
+				MatrCc  <- aracne(MI)
+				diag(MatrCc)  <- 0			# The diagonal element is set to 0 instead of -1, because the matrix "Solution" does so.
+			}	# ARACNE
+
+			if (Method == "MRNET") {		
+				MI <- build.mim(dataset = rbind(MatR[,,1], MatR[,,2]))
+				MatrCc  <- mrnet(MI)
+				diag(MatrCc)  <- 0			# The diagonal element is set to 0 instead of -1, because the matrix "Solution" does so.
+			}	# MRNET
+
 			#	Digitalization of the result and scoring	
 			
 			for (iSeuil in (1:NBSeuils)) {
 				Seuil	<- Seuils[iSeuil]
 				
 				if (Method %in% c("MRA-KD", "MRA-KO")) {
-					MatrCcDig	<-	Digitalize (MatrCc, "Top", Seuil)	#############     VS THRESHOLD !!!
+					MatrCcDig	<-	Digitalize (MatrCc, "Top", Seuil)
 				} else if (Method == "TLR") {
 					MatrCcDig	<-	Digitalize (MatrCc, "Threshold", Seuil)		
 				} else if (Method %in% c("LASSO", "LASSO1")) {
@@ -2435,99 +2550,146 @@ for (iSize in 1:NBS) {
 					}
 					MatrCcDig	<- Digitalize (MatrCc, "Threshold", 0)					
 				} else if (Method == "LSE_CI") {
-					MatrCcDig	<-	MatrCc									# Digitalize (MatrCc, "IThreshold", vPValue)	
+					MatrCcDig	<-	Digitalize (MatrCc, "IThreshold", Seuil)
 				} else if (Method %in% c("STEP-Fo", "STEP-Ba", "STEP-Bo")) {
-					MatrCcDig	<- Digitalize (MatrCc, "Threshold", 0)
+					MatrCcDig	<- Digitalize (MatrCc, "Threshold", Seuil*KSTEP)
+				} else if (Method %in% c("CLR", "ARACNE", "MRNET")) {
+					MatrCcDig	<- Digitalize (MatrCc, "Threshold", Seuil)
 				}			
 				
 				Score[ ,iSeuil,iMeth,iFic,iSize]	<- Benchmark(MatrCcDig,Solution)
 			}	# Loop on iSeuil	
 				
-			if (Method %in% c("MRA-KD", "MRA-KO", "TLR", "LASSO")) {
-				vMatrCc[]  		<- as.numeric(abs(MatrCc[]))
-				vSolution[]		<- as.numeric(Solution[])
-				rb 	<- roc.area(vSolution, vMatrCc)
-				AuROC[iMeth, iFic, iSize]   = rb$A													# AUC ROC for the plotted methods
-			} else {
-				Pts["Sp",iMeth,iFic,iSize] = Score["Sp",1,iMeth,iFic,iSize]						# Point to draw for the non plotted methods
-				Pts["Se",iMeth,iFic,iSize] = Score["Se",1,iMeth,iFic,iSize]
-			}	
+			vMatrCc[]  		<- as.numeric(abs(MatrCc[]))
+			vSolution[]		<- as.numeric(Solution[])
+			rb 	<- roc.area(vSolution, vMatrCc)
+			AuROC [iMeth, iFic, iSize]	 = rb$A	
+			PValue[iMeth, iFic, iSize]	 = rb$p.value
+														# Use this method whenever possible. It's more accurate
+			AuROCZ[iMeth,iFic,iSize]	 =  abs(trapz(1-Score["Sp", ,iMeth,iFic,iSize], Score["Se", ,iMeth,iFic,iSize]))
+														# When roc.area doesn't work : bad p-value ...
+			
+			AuROC [iMeth, iFic, iSize]	 = max(AuROC [iMeth, iFic, iSize], AuROCZ [iMeth, iFic, iSize])
+														# AUC ROC for the plotted methods				
 		}		# Loop on iMeth
 		
-		for (iMat in 1:NBN) {
-			col 	<- 1:NBN
-			col 	<- col[-iMat]
-		
-			cv_model 	<- cv.glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1)	# Fit lasso regression model using k-fold cross-validation
-			best_lambda <- cv_model$lambda.min			
-			best_model 	<- glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1, lambda = best_lambda)	# View coefficients of best model
-			rL			<-	coef(best_model)
-			MatrCc[iMat, col]	<- rL[2:NBN]			# Note that MatrCc is transposed
-		}			
-		MatrCcDig	<- Digitalize (MatrCc, "Threshold", 0)
-		A = Benchmark(MatrCcDig,Solution)
-		Pts["Sp","LASSO",iFic,iSize] = A[6]				# Best Lambda for LASSO's method  -- Sp
-		Pts["Se","LASSO",iFic,iSize] = A[5]				# Best Lambda for LASSO's method  -- Se
+###			for (iMat in 1:NBN) {
+###				col 	<- 1:NBN
+###				col 	<- col[-iMat]
+###			
+###				cv_model 	<- cv.glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1)	# Fit lasso regression model using k-fold cross-validation
+###				best_lambda <- cv_model$lambda.min			
+###				best_model 	<- glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1, lambda = best_lambda)	# View coefficients of best model
+###				rL			<-	coef(best_model)
+###				MatrCc[iMat, col]	<- rL[2:NBN]			# Note that MatrCc is transposed
+###			}			
+###			MatrCcDig	<- Digitalize (MatrCc, "Threshold", 0)
+###			A = Benchmark(MatrCcDig,Solution)
+###			Pts["Sp","LASSO",iFic,iSize] = A[6]				# Best Lambda for LASSO's method  -- Sp
+###			Pts["Se","LASSO",iFic,iSize] = A[5]				# Best Lambda for LASSO's method  -- Se
 	}			# Loop on iFic
 }				# Loop on iSize
 cat("END ", as.character(Sys.time()), "\n")	
+
+
+#
+#	Answers to Reviewers
+#	§ 1.1.1 2nd table : comparison of the methods (AUROC, pValue)
+#	New Figure 4c
+#
+
+for (iMeth in 1:NBM) {
+	cat("Method ", Methods[iMeth], "Size 10 :  AUROC ", mean(AuROC [iMeth, ,1]), " pValue ", mean(PValue[iMeth, ,1]), " AUROCZ ", mean(AuROCZ [iMeth, ,1]), "\n")
+	cat("Method ", Methods[iMeth], "Size 100 : AUROC ", mean(AuROC [iMeth, ,2]), " pValue ", mean(PValue[iMeth, ,2]), " AUROCZ ", mean(AuROCZ [iMeth, ,2]), "\n")
+}		# Loop on iMeth				
+
+
+ScoreM <- array(0, dim=c(2,NBSeuils+2,NBM,1,NBS))
+dimnames(ScoreM)	<- list(c("Se","Sp"), c(0,Seuils,1), Methods, NULL, Sizes)
+ScoreM[ ,2:(NBSeuils+1), ,1, ]  <- Score[c("Se","Sp"), , ,1, ]
+
+for (iMeth in 1:NBM) {
+	Method	<- Methods[iMeth]
+	if (Method %in% c("MRA-KD", "MRA-KO", "LSE_CI")) {
+		ScoreM["Se",1,iMeth,1, ]  			<- 0
+		ScoreM["Se",NBSeuils+2,iMeth,1, ]	<- 1
+		ScoreM["Sp",1,iMeth,1, ]  			<- 1
+		ScoreM["Sp",NBSeuils+2,iMeth,1, ]	<- 0
+	} else {
+		ScoreM["Se",1,iMeth,1, ]  			<- 1
+		ScoreM["Se",NBSeuils+2,iMeth,1, ]	<- 0
+		ScoreM["Sp",1,iMeth,1, ]  			<- 0
+		ScoreM["Sp",NBSeuils+2,iMeth,1, ]	<- 1
+	} 
+}
+
 
 #
 #	Supp. Info. Fig 1 a
 #
 NomFic 	<- paste(vRoot, "Fig_SI1_ROC10.pdf", sep="")
-pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
-
-plot (1-Score["Sp", ,"MRA-KD",1,1], Score["Se", ,"MRA-KD",1,1], 
-	main= "ROC : insilico_size10_1", type="b", col="blue", 
+pdf(file=NomFic, height=9, width=9) 					# Sizes default to 7
+plot (1-ScoreM["Sp", ,"MRA-KD",1,1], ScoreM["Se", ,"MRA-KD",1,1], 
+	main= "ROC : insilico_size10_1", type="l", col="blue", 
 	xlab=paste("1 - Specificity\nAU ROC  KD = ", round(AuROC["MRA-KD",1,1], digits=3), " KO = ", round(AuROC["MRA-KO",1,1], digits=3),
-			    " TLR = ", round(AuROC["TLR",1,1], digits=3), " LASSO = ", round(AuROC["LASSO",1,1], digits=3)), 
+			   " TLR = ", round(AuROC["TLR",1,1], digits=3), " LASSO = ", round(AuROC["LASSO",1,1], digits=3), "\n",
+			   "STEP-Fo = ", round(AuROC["STEP-Fo",1,1], digits=3), "STEP-Ba = ", round(AuROC["STEP-Ba",1,1], digits=3), "STEP-Bo = ", round(AuROC["STEP-Bo",1,1], digits=3)),
 	ylab="Sensibility", xlim=c(0,1), ylim=c(0,1))
-lines(1-Score["Sp", ,"MRA-KO",1,1],	Score["Se", ,"MRA-KO",1,1],	col="black", type="b")
-lines(1-Score["Sp", ,"TLR",1,1],   Score["Se", ,"TLR",1,1],   col="red", 	 type="b")
-lines(1-Score["Sp", ,"LASSO",1,1], Score["Se", ,"LASSO",1,1], col="green",	 type="b")
+#			   " TLR = ", round(AuROC["TLR",1,1], digits=3), " LASSO = ", round(AuROC["LASSO",1,1], digits=3), "LSE_CI =", round(AuROC["LSE_CI",1,1], digits=3), "\n",	
+lines(1-ScoreM["Sp", ,"MRA-KO",1,1],	ScoreM["Se", ,"MRA-KO",1,1],	col="black", type="l")
+lines(1-ScoreM["Sp", ,"TLR",1,1],   ScoreM["Se", ,"TLR",1,1],   col="red", 	 type="l")
+lines(1-ScoreM["Sp", ,"LASSO",1,1], ScoreM["Se", ,"LASSO",1,1], col="green",	 type="l")
+#lines(1-ScoreM["Sp", ,"LSE_CI",1,1], ScoreM["Se", ,"LSE_CI",1,1], col="#CCCCCC",	 type="l")
+lines(1-ScoreM["Sp", ,"STEP-Fo",1,1], ScoreM["Se", ,"STEP-Fo",1,1], col="#CC3FFF",	 type="l")
+lines(1-ScoreM["Sp", ,"STEP-Ba",1,1], ScoreM["Se", ,"STEP-Ba",1,1], col="#FF9933",	 type="l")
+lines(1-ScoreM["Sp", ,"STEP-Bo",1,1], ScoreM["Se", ,"STEP-Bo",1,1], col="#FFFF00",	 type="l")
 abline(c(0,0), c(1,1), col="grey", lty="dashed")
-points(1-Pts["Sp","LSE_CI",1,1],	Pts["Se","LSE_CI",1,1],		pch=19, col="maroon4", 	bg="maroon4")
-points(1-Pts["Sp","STEP-Fo",1,1], 	Pts["Se","STEP-Fo",1,1], 	pch=22, col="maroon4", 	bg="maroon4")
-points(1-Pts["Sp","STEP-Ba",1,1], 	Pts["Se","STEP-Ba",1,1], 	pch=24, col="maroon4", 	bg="maroon4")
-points(1-Pts["Sp","STEP-Bo",1,1], 	Pts["Se","STEP-Bo",1,1], 	pch=25, col="maroon4", 	bg="maroon4")
-points(1-Pts["Sp","LASSO",1,1],   	Pts["Se","LASSO",1,1],   	pch=23, col="orange", 	bg="orange")
-legend("bottomright", c("MRA-KD","MRA-KO","TLR","LASSO"), fill=c("blue","black","red","green"))
-legend("bottom", c("LSE_CI","STEP-Fo","STEP-Ba","STEP-Bo","LASSO"), pch=c(19,22,24,25,23),
-	   col=c("maroon4","maroon4","maroon4","maroon4","maroon4"))
-
+legend("bottomright", c("MRA-KD","MRA-KO","TLR","LASSO","STEP-Fo","STEP-Ba","STEP-Bo"), fill=c("blue","black","red","green","orange","lightpink3","#FFFF00"))
+#legend("bottomright", c("MRA-KD","MRA-KO","TLR","LASSO","LSE_CI","STEP-Fo","STEP-Ba","STEP-Bo"), fill=c("blue","black","red","green","#CCCCCC","#CC3FFF","#FF9933","#FFFF00"))
 dev.off()
 
+# points(1-Pts["Sp","LSE_CI",1,1],	Pts["Se","LSE_CI",1,1],		pch=19, col="maroon4", 	bg="maroon4")
+# points(1-Pts["Sp","STEP-Fo",1,1], 	Pts["Se","STEP-Fo",1,1], 	pch=22, col="maroon4", 	bg="maroon4")
+# points(1-Pts["Sp","STEP-Ba",1,1], 	Pts["Se","STEP-Ba",1,1], 	pch=24, col="maroon4", 	bg="maroon4")
+# points(1-Pts["Sp","STEP-Bo",1,1], 	Pts["Se","STEP-Bo",1,1], 	pch=25, col="maroon4", 	bg="maroon4")
+# points(1-Pts["Sp","LASSO",1,1],   	Pts["Se","LASSO",1,1],   	pch=23, col="orange", 	bg="orange")
+# legend("bottom", c("LSE_CI","STEP-Fo","STEP-Ba","STEP-Bo","LASSO"), pch=c(19,22,24,25,23),
+#	   col=c("maroon4","maroon4","maroon4","maroon4","maroon4"))
    
 #
 #	Supp. Info. Fig 1 b
 #
 NomFic 	<- paste(vRoot, "Fig_SI1_ROC100.pdf", sep="")
-pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
-
-plot (1-Score["Sp", ,"MRA-KD",1,2], Score["Se", ,"MRA-KD",1,2], 
-	main= "ROC : insilico_size100_1", type="b", col="blue", 
+pdf(file=NomFic, height=9, width=9) 					# Sizes default to 7
+plot (1-ScoreM["Sp", ,"MRA-KD",1,2], ScoreM["Se", ,"MRA-KD",1,2], 
+	main= "ROC : insilico_size100_1", type="l", col="blue", 
 	xlab=paste("1 - Specificity\nAU ROC  KD = ", round(AuROC["MRA-KD",1,2], digits=3), " KO = ", round(AuROC["MRA-KO",1,2], digits=3),
-			    " TLR = ", round(AuROC["TLR",1,2], digits=3), " LASSO = ", round(AuROC["LASSO",1,2], digits=3)), 
+			   " TLR = ", round(AuROC["TLR",1,2], digits=3), " LASSO = ", round(AuROC["LASSO",1,2], digits=3), "\n",
+			   "STEP-Fo = ", round(AuROC["STEP-Fo",1,2], digits=3), "STEP-Ba = ", round(AuROC["STEP-Ba",1,2], digits=3), "STEP-Bo = ", round(AuROC["STEP-Bo",1,2], digits=3)), 
 	ylab="Sensibility", xlim=c(0,1), ylim=c(0,1))
-lines(1-Score["Sp", ,"MRA-KO",1,2],	Score["Se", ,"MRA-KO",1,2],	col="black", type="b")
-lines(1-Score["Sp", ,"TLR",1,2],   Score["Se", ,"TLR",1,2],   col="red", 	 type="b")
-lines(1-Score["Sp", ,"LASSO",1,2], Score["Se", ,"LASSO",1,2], col="green",	 type="b")
+#			   " TLR = ", round(AuROC["TLR",1,2], digits=3), " LASSO = ", round(AuROC["LASSO",1,2], digits=3), "LSE_CI =", round(AuROC["LSE_CI",1,2], digits=3), "\n",
+lines(1-ScoreM["Sp", ,"MRA-KO",1,2],	ScoreM["Se", ,"MRA-KO",1,2],	col="black", type="l")
+lines(1-ScoreM["Sp", ,"TLR",1,2],   ScoreM["Se", ,"TLR",1,2],   col="red", 	 type="l")
+lines(1-ScoreM["Sp", ,"LASSO",1,2], ScoreM["Se", ,"LASSO",1,2], col="green",	 type="l")
+#lines(1-ScoreM["Sp", ,"LSE_CI",1,2], ScoreM["Se", ,"LSE_CI",1,2], col="#CCCCCC",	 type="l")
+lines(1-ScoreM["Sp", ,"STEP-Fo",1,2], ScoreM["Se", ,"STEP-Fo",1,2], col="#CC3FFF",	 type="l")
+lines(1-ScoreM["Sp", ,"STEP-Ba",1,2], ScoreM["Se", ,"STEP-Ba",1,2], col="#FF9933",	 type="l")
+lines(1-ScoreM["Sp", ,"STEP-Bo",1,2], ScoreM["Se", ,"STEP-Bo",1,2], col="#FFFF00",	 type="l")
 abline(c(0,0), c(1,1), col="grey", lty="dashed")
-points(1-Pts["Sp","LSE_CI",1,2],	Pts["Se","LSE_CI",1,2],		pch=19, col="maroon4", 	bg="maroon4")
-points(1-Pts["Sp","STEP-Fo",1,2], 	Pts["Se","STEP-Fo",1,2], 	pch=22, col="maroon4", 	bg="maroon4")
-points(1-Pts["Sp","STEP-Ba",1,2], 	Pts["Se","STEP-Ba",1,2], 	pch=24, col="maroon4", 	bg="maroon4")
-points(1-Pts["Sp","STEP-Bo",1,2], 	Pts["Se","STEP-Bo",1,2], 	pch=25, col="maroon4", 	bg="maroon4")
-points(1-Pts["Sp","LASSO",1,2],   	Pts["Se","LASSO",1,2],   	pch=23, col="orange", 	bg="orange")
-legend("bottomright", c("MRA-KD","MRA-KO","TLR","LASSO"), fill=c("blue","black","red","green"))
-legend("bottom", c("LSE_CI","STEP-Fo","STEP-Ba","STEP-Bo","LASSO"), pch=c(19,22,24,25,23),
-	   col=c("maroon4","maroon4","maroon4","maroon4","maroon4"))
-	   
+legend("bottomright", c("MRA-KD","MRA-KO","TLR","LASSO","STEP-Fo","STEP-Ba","STEP-Bo"), fill=c("blue","black","red","green","orange","lightpink3","#FFFF00"))
+#legend("bottomright", c("MRA-KD","MRA-KO","TLR","LASSO","LSE_CI","STEP-Fo","STEP-Ba","STEP-Bo"), fill=c("blue","black","red","green","#CCCCCC","#CC3FFF","#FF9933","#FFFF00"))
 dev.off()
 	   
+# points(1-Pts["Sp","LSE_CI",1,2],	Pts["Se","LSE_CI",1,2],		pch=19, col="maroon4", 	bg="maroon4")
+# points(1-Pts["Sp","STEP-Fo",1,2], 	Pts["Se","STEP-Fo",1,2], 	pch=22, col="maroon4", 	bg="maroon4")
+# points(1-Pts["Sp","STEP-Ba",1,2], 	Pts["Se","STEP-Ba",1,2], 	pch=24, col="maroon4", 	bg="maroon4")
+# points(1-Pts["Sp","STEP-Bo",1,2], 	Pts["Se","STEP-Bo",1,2], 	pch=25, col="maroon4", 	bg="maroon4")
+# points(1-Pts["Sp","LASSO",1,2],   	Pts["Se","LASSO",1,2],   	pch=23, col="orange", 	bg="orange")
+# legend("bottom", c("LSE_CI","STEP-Fo","STEP-Ba","STEP-Bo","LASSO"), pch=c(19,22,24,25,23),
+# 	   col=c("maroon4","maroon4","maroon4","maroon4","maroon4"))
 
 #
-#	Supplementary Figure 2 and Figure 3
+#	Supplementary Figure 2, Figure 3, Table 2, Table 3
 #
 #	ROC curves for DREAM 4 Challenge, corresponding to challenges "insilico_size10_1"... "**_size10_5" (fig 2), "insilico_size100_1"... "**_size100_5" (fig 3) and many methods. 
 #	Update the variables "iSize" and "iFic" to scan the 5 files and draw the corresponding picture.
@@ -2538,7 +2700,7 @@ NBFIC		<- 5									# There are 5 files for a given size
 Sizes		<- c(10, 100)							# Nbr of nodes of the network
 NBS			<- length(Sizes) 
 
-Methods		<-  c("MRA-KD", "MRA-KO", "TLR", "STEP-Fo", "STEP-Ba", "STEP-Bo", "CLR", "ARACNE", "MRNET")
+Methods		<-  c("MRA-KD", "MRA-KO", "TLR", "LASSO", "STEP-Fo", "STEP-Ba", "STEP-Bo", "CLR", "ARACNE", "MRNET")
 NBM			<- length(Methods)						# Number of méthods
 
 vTOP		<- c(0.2, 0.25)							# "top" of the edges to take into account
@@ -2559,7 +2721,7 @@ NBSCDC		<-  length(ScoreDCTests)						# Number of scores
 ScoreDC 			<- array(0, dim=c(NBSCDC, NBM, NBFIC, NBS))	# "AUC", "AUPR", "PVAUC", "PVAUPR" 1° dim.
 dimnames(ScoreDC)	<- list(ScoreDCTests, Methods, NULL, Sizes)
 
-ScoreDCOut 			<- array(0, dim=c(NBM+1, NBFIC+2, NBS))	# Title and methods 1° dim.  - Out value (AUC) for the NBFIC files + mean and sd  2° dim
+ScoreDCOut 			<- array(0, dim=c(NBM+1, NBFIC+3, NBS))	# Title and methods 1° dim.  - Out value (AUC) for the NBFIC files + mean, sd  and AUROC Score 2° dim
 dimnames(ScoreDCOut)<- list(c("AUC",Methods), NULL, Sizes)
 
 Pts			<- array(0, dim=c(2, NBM, NBFIC, NBS))			# Spec and Sensib corresponding to the points to draw on the ROC curves (not plotted methods)
@@ -2592,6 +2754,7 @@ for (iSize in 1:NBS) {
 	MatrCc		<- array(dim=c(NBN, NBN))			# "r" matrix computed (according to method MRA, TLR, STEP or LASSO)
 	MatrCcDig	<- array(dim=c(NBN, NBN))			# Computed Connection matrix digitalized (0, 1)
 	rij 		<- matrix(nrow=1, ncol=NBN-1)		# Intermediate calculation of rij
+	rL 			<- array(dim=c(NBN))				# Result of Lasso method (ie sol. of Yi = Ai * Xi)	
 	
 	vMatrCc  	<- vector(length = NBN*NBN)			# MatrCc as a vector (to use roc.area)
 	vSolution	<- vector(length = NBN*NBN)			# Solution as a vector (to use roc.area)
@@ -2693,12 +2856,26 @@ for (iSize in 1:NBS) {
 					col <- 1:NBN
 					col <- col[-iMat]
 			
-					Form <- paste("gY[,",iMat,"]~gX[,,",iMat,"]+0")
+					Form <- paste("gY[ ,",iMat,"]~gX[ , ,",iMat,"]+0")
 					MatrCc[iMat, col] 	<- (lm(as.formula(Form)))$coefficients
 					MatrCc[iMat, iMat]  <- 0			# The diagonal element is set to 0 instead of -1, because the matrix "Solution" does so.
 				}
 				MatrCc[is.na(MatrCc)]  <- 0	
-			}	# TLR with Linear regression, 2 measures per node		
+			}	# TLR with Linear regression, 2 measures per node
+			
+			if (Method == "LASSO") {				# Digitalization = 1 if the result != 0	-- automatic choice of lambda
+				MatrCc[ , ] <- 0
+				for (iMat in 1:NBN) {
+					col 	<- 1:NBN
+					col 	<- col[-iMat]
+	
+					cv_model 	<- cv.glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1)	# Fit lasso regression model using k-fold cross-validation
+					best_lambda <- cv_model$lambda.min
+					best_model 	<- glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1, lambda = best_lambda)		# View coefficients of best model
+					rL			<-	coef(best_model)
+					MatrCc[iMat, col]	<- rL[2:NBN]		# Note that MatrCc is transposed
+				}
+			}	# Method LASSO			
 
 			if (Method %in% c("STEP-Fo", "STEP-Ba", "STEP-Bo")) {
 			#	Method "step" (automatic removal of coefficients by optimization of AIC : Akaike's Information Criterion)
@@ -2802,7 +2979,7 @@ for (iSize in 1:NBS) {
 }				# Loop on iSize
 
 #	To get "Sensitivity" and "Specificity" corresponding to the values described in the article, we must choose :
-#	iSeuil = 5 (Seuil = 0.2) if iSize = 1 and Method in ("MRA_KO", "MRA_KD")  (and "STEP" whose values don't depend od iSeuil)
+#	iSeuil = 5 (Seuil = 0.2) if iSize = 1 and Method in ("MRA_KO", "MRA_KD")  (and "STEP" whose values don't depend on iSeuil)
 #	iSeuil = 6 (Seuil = 0.25) if Method = "TLR" or if iSize = 2 and Method in ("MRA_KO", "MRA_KD")
 #
 
@@ -2818,9 +2995,9 @@ iSize	<- 1			# 1 : insilico_Size10 (Fig_SI2),  2 : insilico_Size100 (Fig_SI3)
 iFic	<- 1			# Scan the integers 1 to 5 to draw the different pictures ("a" to "e")
 
 NomFic 	<- paste(vRoot, Noms[iSize], "_", letters[iFic], ".pdf", sep="")		# Fig_SI2_a.pdf
-pdf(file=NomFic, height=10, width=10) 					# Sizes default to 7
+pdf(file=NomFic, height=7, width=7) 					# Sizes default to 7
 
-plot (1-Score["Sp", ,"MRA-KD",iFic,iSize], Score["Se", ,"MRA-KD",iFic,iSize], type="l", col="blue", xlab="", ylab="Se", xlim=c(0,1), ylim=c(0,1))
+plot (1-Score["Sp", ,"MRA-KD",iFic,iSize], Score["Se", ,"MRA-KD",iFic,iSize], type="l", col="blue", xlab="", ylab="", xlim=c(0,1), ylim=c(0,1))
 lines(1-Score["Sp", ,"MRA-KO",iFic,iSize],	Score["Se", ,"MRA-KO",iFic,iSize],	col="black")
 lines(1-Score["Sp", ,"TLR",iFic,iSize],   	Score["Se", ,"TLR",iFic,iSize],    col="red")
 abline(c(0,0), c(1,1), col="grey", lty="dashed")
@@ -2830,7 +3007,7 @@ text(0.01, Pts["Se","TLR",iFic,iSize], Pts["Se","TLR",iFic,iSize], font=3)				# 
 segments(x0 = 1-Pts["Sp","TLR",iFic,iSize], y0 = -0.03,	x1 = 1-Pts["Sp","TLR",iFic,iSize], y1 = Pts["Se","TLR",iFic,iSize], col = "darkgrey", lty="dashed")
 text(1-Pts["Sp","TLR",iFic,iSize]+0.01, 0.03, 1-Pts["Sp","TLR",iFic,iSize], font=3)		# font : 1=normal, 2=bold, 3=italic, 4=bold+italic  -- x coordinate of TLR, standard threshold
 text(0.03, 0.95, paste(Sizes[iSize], "_", iFic, sep=""), font=2)						# Name of the figure
-text(0.4,  0.03, "1 - Sp")																# x label
+#text(0.4,  0.03, "1 - Sp")																# x label
 legend("bottomright", c("MRA-KD","MRA-KO","TLR"), fill=c("blue","black","red"))
 
 dev.off()
@@ -2840,7 +3017,8 @@ dev.off()
 #	Supp. Info. Fig 2 f and Fig 3 f + doc. "Answers to the reviewers (2 nd table § 1.1.1)
 #
 
-iSize	<- 1			# 1 : insilico_Size10 (Fig_SI2),  2 : insilico_Size100 (Fig_SI3)
+dimnames(ScoreDCOut)<- list(c("AUC",Methods), NULL, Sizes)
+iSize	<- 2			# 1 : insilico_Size10 (Fig_SI2),  2 : insilico_Size100 (Fig_SI3)
 
 for (iFic in 1:NBFIC) {
 	ScoreDCOut[1,		 iFic,iSize]	<- paste(Sizes[iSize], "-", iFic, sep="")
@@ -2857,31 +3035,42 @@ for (iMeth in 1:NBM) {
 	ScoreDCOut[iMeth+1,NBFIC+2,iSize]	<- round(var(ScoreDC["AUC",iMeth, ,iSize])**0.5, digits=2)
 }	
 
-write.csv(ScoreDCOut[ , ,iSize], file=paste(vRoot, Noms[iSize], "_f.csv", sep=""), col.names=FALSE)
+ScoreDCOut[1,NBFIC+3,iSize]				<- "Score"
+for (iMeth in 1:NBM) {
+	ScoreDCOut[iMeth+1,NBFIC+3,iSize]	<- round(-0.2*sum(log10(ScoreDC["AUC",iMeth, ,iSize])), digits=3)
+}
+
+write.csv(ScoreDCOut[ , ,iSize], file=paste(vRoot, Noms[iSize], "_f.csv", sep=""), col.names=FALSE, append=TRUE)
 
 
 #
-#	Doc. "Answers to the reviewers (ranking of our methods, §1.1.6)
+#	Doc. "Answers to the reviewers (ranking of our methods, §1.1.6: DREAM CHALLENGE 4)
 #
 
 dimnames(ScoreDCOut)<- list(c("PVAUC",Methods), NULL, Sizes)
-
-iSize	<- 1			# 1 : insilico_Size10 (Fig_SI2),  2 : insilico_Size100 (Fig_SI3)
+iSize	<- 2			# 1 : insilico_Size10 (Fig_SI2),  2 : insilico_Size100 (Fig_SI3)
 
 for (iFic in 1:NBFIC) {
 	ScoreDCOut[1,		 iFic,iSize]	<- paste(Sizes[iSize], "-", iFic, sep="")
-	ScoreDCOut[2:(NBM+1),iFic,iSize]	<- round(ScoreDC["PVAUC", ,iFic,iSize], digits=4)
+	ScoreDCOut[2:(NBM+1),iFic,iSize]	<- ScoreDC["PVAUC", ,iFic,iSize]
 }
 
 ScoreDCOut[1, NBFIC+1, iSize]			<- "Mean"
 for (iMeth in 1:NBM) {
 	ScoreDCOut[iMeth+1,NBFIC+1,iSize]	<- round(mean(ScoreDC["PVAUC",iMeth, ,iSize]), digits=4)
-}	
+}
 
 ScoreDCOut[1,NBFIC+2,iSize]				<- "sd"
 for (iMeth in 1:NBM) {
 	ScoreDCOut[iMeth+1,NBFIC+2,iSize]	<- round(var(ScoreDC["PVAUC",iMeth, ,iSize])**0.5, digits=4)
-}	
+}
+
+ScoreDCOut[1,NBFIC+3,iSize]				<- "Score"
+for (iMeth in 1:NBM) {
+	ScoreDCOut[iMeth+1,NBFIC+3,iSize]	<- round(-0.2*sum(log10(ScoreDC["PVAUC",iMeth, ,iSize])), digits=3)
+}
+
+write.csv(ScoreDCOut[ , ,iSize], file=paste(vRoot, Noms[iSize], "_f.csv", sep=""), col.names=FALSE, append=TRUE)
 
 
 #
@@ -2985,7 +3174,7 @@ NBT			<- length(Noises)
 Diago		<- c(-2, -2/3)		# KO, KD (-50%)
 Seeds 		<- c(12345, 72090, 87577, 45648, 16637)		# To do independant trials
 
-Methods		<- c("MRA", "MRA_CLR", "ARACNE", "LSE", "TLR", "STEP-Fo")
+Methods		<- c("MRA", "LSE_CI", "LASSO", "LSE", "STEP-Fo", "CLR", "MRA_CLR", "ARACNE", "MRNET")
 NBM			<- length(Methods)								# Nbr of methods to test
 
 ErrorQ		<- array(0, dim=c(NBM,NBT,NBTrials,NBSets))		# Quadratic error, as a function of noise level and method used
@@ -3045,6 +3234,8 @@ for (iSet in 1:NBSets) {
 		MatR[ , ,2]		<- (rm1 %*% dgrm1M1)*Diago[2]	# 2 = KD (-50%)
 		RMoy			<- mean(abs(MatR))				# mean value
 		
+		cat("TF ", TF, " TA ", TA, " Fic ", iTrial, " RMoy ", RMoy, "\n")		
+		
 		for (iT in 1:NBT) {
 			set.seed(Seeds[iTrial])						# So as to generate the same sequences
 			Noise	<- Noises[iT]
@@ -3065,6 +3256,7 @@ for (iSet in 1:NBSets) {
 
 #
 #	Third part : detection of networks structure and error computation
+#	Supplementary Information Table 4
 #
 
 for (iSet in 1:NBSets) {
@@ -3080,9 +3272,15 @@ for (iSet in 1:NBSets) {
 	rij 		<- matrix(nrow=1, ncol=NBN-1)				# Intermediate calculation of rij
 	pX   		<- array(dim=c(NBN-1, NBN-1))				# row (iRow), column (iCol)	
 	pY   		<- array(dim=c(NBN-1))						# row
-	gX   		<- array(dim=c(NBK*(NBN-1), NBN-1))			# row (iRow), column (iCol)
-	gY   		<- array(dim=c(NBK*(NBN-1)))				# row
+	gX   		<- array(dim=c(NBK*(NBN-1), NBN-1, NBN))	# row (iRow), column (iCol), matrix (iMat)
+	gY   		<- array(dim=c(NBK*(NBN-1), NBN))			# row, matrix
 	
+	rL 			<- array(dim=c(NBN))						# Result of Lasso method (ie sol. of Yi = Ai * Xi)
+	
+	ValMin		<- array(dim=c(NBN, NBN))					# Min value at IC95 of rij
+	ValMax		<- array(dim=c(NBN, NBN))					# Max value at IC95 of rij
+
+
 	for (iTrial in 1:NBTrials) {
 		cat("iSet ", iSet, " TF ", TF, " TA ", TA, " iTrial ", iTrial, "\n")
 
@@ -3100,6 +3298,24 @@ for (iSet in 1:NBSets) {
 				}
 			}
 			
+			for (iPaq in c(1:NBK)) {					# We take every available data : Knock Down (50%) and Knock Out
+				for (iMat in 1:NBN) {
+					col <- 1:NBN
+					col <- col[-iMat]
+					
+					for (iRow in 1:(NBN-1)) {
+						pY[iRow] = MatRN[iMat, col[iRow], iPaq, iT]
+						
+						for (iCol in 1:NBN-1) {
+							pX[iRow, iCol] = MatRN[col[iCol], col[iRow], iPaq, iT]
+						}
+					}
+				
+					gX[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq), ,iMat]  	<- pX[ , ]
+					gY[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq),iMat]   	<- pY[ ]
+				}		# Loop on iMat
+			}			# Loop on iPaq			
+						
 			for (iMeth in 1:NBM) {
 				Method 	<- Methods[iMeth]
 				cat(" iT ", iT, " Method ", Method, " Time ", as.character(Sys.time()), "\n")
@@ -3120,54 +3336,51 @@ for (iSet in 1:NBSets) {
 
 				if (Method == "LSE") {			# CAUTION : this method is called "TLR" in the article. No threshold is applied when computing quadratic error.
 					for (iMat in 1:NBN) {
-						for (iPaq in c(1:NBK)) {			# We take every available data : Knock Out and Knock Down (50%)	
-							col <- 1:NBN
-							col <- col[-iMat]
-							
-							for (iRow in 1:(NBN-1)) {
-								pY[iRow] = MatRN[iMat, col[iRow], iPaq, iT]
-								
-								for (iCol in 1:NBN-1) {
-									pX[iRow, iCol] = MatRN[col[iCol], col[iRow], iPaq, iT]
-								}
-							}
-				
-							gX[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq), ]  <- pX[,]
-							gY[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq)]    <- pY[]
-						}	# Loop on iPaq
-							
-						Form <- paste("gY[]~gX[,]+0")
+						col 	<- 1:NBN
+						col 	<- col[-iMat]
+						Form <- paste("gY[,",iMat,"]~gX[,,",iMat,"]+0")
 						
 						MatrCc[iMat, col] 	<- (lm(as.formula(Form)))$coefficients
 					}		# Loop on iMat						
 				}	# Linear regression, 2 measures per node
-				
+								
+				if (Method == "LSE_CI") {
+					for (iMat in 1:NBN) {
+						col 	<- 1:NBN
+						col 	<- col[-iMat]
+						Form <- paste("gY[,",iMat,"]~gX[,,",iMat,"]+0")
+						
+						pQ 	 <- lm(as.formula(Form))
+						ValMin [iMat,col]  	<- broom::tidy(pQ)$estimate - 1.96*broom::tidy(pQ)$std.error	# 1.96 to get an IC 95%
+						ValMax [iMat,col]  	<- broom::tidy(pQ)$estimate + 1.96*broom::tidy(pQ)$std.error
+						
+						MatrCc[iMat, col] 	<- ifelse(ValMin[iMat,col] > 0 | ValMax[iMat,col] < 0, 1, 0)
+					}		# Loop on iMat						
+				}	# LSE_CI method
+								
 				if (Method == "TLR") {
 					for (iMat in 1:NBN) {
-						for (iPaq in c(1:NBK)) {			# We take every available data : Knock Out and Knock Down (50%)	
-							col <- 1:NBN
-							col <- col[-iMat]
-							
-							for (iRow in 1:(NBN-1)) {
-								pY[iRow] = MatRN[iMat, col[iRow], iPaq, iT]
-								
-								for (iCol in 1:NBN-1) {
-									pX[iRow, iCol] = MatRN[col[iCol], col[iRow], iPaq, iT]
-								}
-							}
-				
-							gX[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq), ]  <- pX[,]
-							gY[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq)]    <- pY[]
-						}	# Loop on iPaq
-							
-						Form <- paste("gY[]~gX[,]+0")
-						
+						Form <- paste("gY[,",iMat,"]~gX[,,",iMat,"]+0")	
 						MatrCc[iMat, col] 	<- (lm(as.formula(Form)))$coefficients
-						Th		<- 0.25*max(abs(MatrCc))
-						MatrCc	<- ifelse(abs(MatrCc) >= Th, MatrCc, 0)	
-					}		# Loop on iMat						
-				}	# Linear regression with a threshold, 2 measures per node	
-				
+					}		# Loop on iMat
+					
+					Th		<- 0.25*max(abs(MatrCc))
+					MatrCc	<- ifelse(abs(MatrCc) >= Th, MatrCc, 0)						
+				}	# Linear regression with a threshold, 2 measures per node
+
+				if (Method == "LASSO") {					# Automatic choice of lambda
+					for (iMat in 1:NBN) {					
+						col 	<- 1:NBN
+						col 	<- col[-iMat]
+		
+						cv_model 	<- cv.glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1)	# Fit lasso regression model using k-fold cross-validation
+						best_lambda <- cv_model$lambda.min
+						best_model 	<- glmnet(gX[ , ,iMat], gY[ ,iMat], alpha = 1, lambda = best_lambda)		# View coefficients of best model
+						rL			<-	coef(best_model)
+						MatrCc[iMat, col]	<- rL[2:NBN]		# Note that MatrCc is transposed						
+					}
+				}	# LASSO method
+
 				if (Method %in% c("STEP-Fo", "STEP-Ba")) {
 				#	Method "step" (automatic removal of coefficients by optimization of AIC : Akaike's Information Criterion)
 				
@@ -3184,14 +3397,14 @@ for (iSet in 1:NBSets) {
 									pX[iRow, iCol] = MatRN[col[iCol], col[iRow], iPaq, iT]
 								}
 							}
-				
-							gX[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq), ]  <- pX[,]
-							gY[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq)]    <- pY[]
+										
+							gX[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq), ,iMat]  	<- pX[ , ]
+							gY[((NBN-1)*(iPaq-1)+1) : ((NBN-1)*iPaq),iMat]   	<- pY[ ]							
 						}	# Loop on iPaq
 
-						Donnees  <- data.frame(gY[], gX[,])
+						Donnees  <- data.frame(gY[ ,iMat], gX[ , ,iMat])
 						#	cat("iMat ", iMat, " Data ", colnames(Donnees), "\n")							
-						Donnees	 <- rename(Donnees, "Y" ="gY..")		# The follow-up is clearer like this
+						Donnees	 <- rename(Donnees, "Y" ="gY...iMat.")		# The follow-up is clearer like this
 						cc 		 <- colnames(Donnees)						# Name of the columns "Data". The first one is "Y"
 						cc		 <- cc[-1]									# It remains the name of the coefficients ("X1", "X2", ... "Xn"  -- n = NBN-1)
 						colnames(rij) <- cc									# step gives the column names corresponding to the coefficients that are kept
@@ -3230,6 +3443,16 @@ for (iSet in 1:NBSets) {
 					MatrCc  <- aracne(MI)
 				}	# ARACNE method
 				
+				if (Method == "CLR") {					# Library "minet"
+					MI <- build.mim(dataset = rbind(MatRN[,,1,iT], MatRN[,,2,iT]))	
+					MatrCc  <- clr(MI)
+				}	# CLR method
+				
+				if (Method == "MRNET") {		
+					MI <- build.mim(dataset = rbind(MatRN[,,1,iT], MatRN[,,2,iT]))	
+					MatrCc  <- mrnet(MI)
+				}	# MRNET	method				
+				
 				diag(MatrCc)	<- -1
 				
 				ss	<- sum((MatrCc-Solution)**2)
@@ -3251,7 +3474,7 @@ for (iSet in 1:NBSets) {
 	}				# Loop on iTrial
 }					# Loop on iSet
 
-write.table(ErrorQ, FileErrorQ, row.names=FALSE, col.names=FALSE, sep=",")	# Frank_ErrorQ.csv
+write.table(ErrorQ, FileErrorQ, append=TRUE, row.names=FALSE, col.names=FALSE, sep=",")	# Frank_ErrorQ.csv
 # If the program reaches the end, the errors are saved here and the temporary values are deleted.
 
 cat("FIN Time ", as.character(Sys.time()), "\n")
@@ -3262,6 +3485,8 @@ cat("FIN Time ", as.character(Sys.time()), "\n")
 #
 
 NbNodes		<- vector(length=NBSets)								# Number of nodes
+Methods		<- c("MRA", "MRA_CLR", "ARACNE", "LSE",  "STEP-Fo")
+NBM			<- length(Methods)
 
 RightA		<- array(0, dim=c(NBTrials, NBSets))					# L1 norm : sum(abs(Solution[i,j]))
 RightM		<- array(0, dim=c(2,NBSets))							# Statistics about L1 norm : mean, sd
@@ -3285,7 +3510,7 @@ for (iSet in 1:NBSets) {
 }			# Loop on iSet	
 
 for (iSet in 1:NBSets) {
-	RightM["mean",iSet] 	<- round (mean(RightA[ ,iSet]), digits=3)
+	RightM["mean",iSet] 	<- round (mean(RightA[ ,iSet]), digits=3)			# Table RIGHT
 	RightM["sd",iSet] 		<- round ((var(RightA[ ,iSet]))**0.5, digits=3)
 }			# Loop on iSet
 
@@ -3308,98 +3533,254 @@ for (iSet in 1:NBSets) {
 	}			# Loop on iT
 }				# Loop on iSet
 
+#
+#	New Figure 5
+#
 #	TA = 0		k = 0.1
 
 Err1TA0_MRA.df		<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean","MRA",1,1:8], 	 	sd=ErrorsM["sd","MRA",1,1:8], 		Method="MRA")
 # Err1TA0_MRACLR.df	<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean","MRA_CLR",1,1:8], 	sd=ErrorsM["sd","MRA_CLR",1,1:8], 	Method="MRA-CLR")
-Err1TA0_ARAC.df		<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean","ARACNE",1,1:8], 	sd=ErrorsM["sd","ARACNE",1,1:8], 	Method="ARACNE")
+# Err1TA0_ARAC.df		<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean","ARACNE",1,1:8], 	sd=ErrorsM["sd","ARACNE",1,1:8], 	Method="ARACNE")
 Err1TA0_LSE.df		<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean","LSE",1,1:8], 	 	sd=ErrorsM["sd","LSE",1,1:8], 		Method="TLR")
 Err1TA0_STEP.df		<- data.frame(NbNodes=NbNodes[1:5], avg=ErrorsM["mean","STEP-Fo",1,1:5],	sd=ErrorsM["sd","STEP-Fo",1,1:5], 	Method="STEP")
-Err1TA0.df			<- rbind(Err1TA0_MRA.df, Err1TA0_ARAC.df, Err1TA0_LSE.df, Err1TA0_STEP.df)
+Err1TA0.df			<- rbind(Err1TA0_MRA.df, Err1TA0_LSE.df, Err1TA0_STEP.df)
 
 NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Err1TA0.pdf", sep="")
-pdf(file=NomFic, height=10,width=10) 							# Sizes default to 7
+pdf(file=NomFic, height=6,width=3) 							# Sizes default to 7
+
 ggplot() + 
-	geom_line(data=Err1TA0.df, aes(x=NbNodes, y=avg, colour=factor(Method)))+
-	xlab("Number of nodes") + ylab("Average quadratic error") + ggtitle("Quadratic Error, k = 0.1, TA = 0")+
-	scale_colour_manual(name="Method", values=c("MRA"="blue", "ARACNE"="green", "TLR"="red", "STEP"="black"))+
-	geom_ribbon(data=Err1TA0_LSE.df, aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="grey70", alpha=0.3)
+	geom_line(data=Err1TA0.df, aes(x=NbNodes, y=avg, colour=factor(Method)), show.legend=FALSE)+	# legend removed to get more space (4 figs. with the same caption, added with Inkscape)
+	xlab("Number of nodes") + ylab("Average squared error") + ggtitle("Squared Error, k = 10%, TA = 0")   +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "ARACNE"="green", "TLR"="red", "STEP"="black")) +
+	geom_ribbon(data=Err1TA0_LSE.df,  aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="grey70", 	alpha=0.3) +
+	geom_ribbon(data=Err1TA0_STEP.df, aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="olivedrab2", alpha=0.3) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
 dev.off()
 
 #	TF = TA		k = 0.1
 
 Err1TATF_MRA.df		<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean","MRA",1,9:15], 	 	sd=ErrorsM["sd","MRA",1,9:15], 		Method="MRA")
 # Err1TA0_MRACLR.df	<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean","MRA_CLR",1,9:15], 	sd=ErrorsM["sd","MRA_CLR",1,9:15], 	Method="MRA-CLR")
-Err1TATF_ARAC.df	<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean","ARACNE",1,9:15], 	sd=ErrorsM["sd","ARACNE",1,9:15], 	Method="ARACNE")
+# Err1TATF_ARAC.df	<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean","ARACNE",1,9:15], 	sd=ErrorsM["sd","ARACNE",1,9:15], 	Method="ARACNE")
 Err1TATF_LSE.df		<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean","LSE",1,9:15], 	 	sd=ErrorsM["sd","LSE",1,9:15], 		Method="TLR")
 Err1TATF_STEP.df	<- data.frame(NbNodes=NbNodes[9:11], avg=ErrorsM["mean","STEP-Fo",1,9:11], 	sd=ErrorsM["sd","STEP-Fo",1,9:11], 	Method="STEP")
-Err1TATF.df			<- rbind(Err1TATF_MRA.df, Err1TATF_ARAC.df, Err1TATF_LSE.df, Err1TATF_STEP.df)
+Err1TATF.df			<- rbind(Err1TATF_MRA.df, Err1TATF_LSE.df, Err1TATF_STEP.df)
 
 NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Err1TATF.pdf", sep="")
-pdf(file=NomFic, height=10,width=10) 							# Sizes default to 7
+pdf(file=NomFic, height=6,width=3) 							# Sizes default to 7
+
 ggplot() + 
-	geom_line(data=Err1TATF.df, aes(x=NbNodes, y=avg, colour=factor(Method)))+
-	xlab("Number of nodes") + ylab("Average quadratic error") + ggtitle("Quadratic Error, k = 0.1, TA = TF")+
-	scale_colour_manual(name="Method", values=c("MRA"="blue", "ARACNE"="green", "TLR"="red","STEP"="black"))+
-	geom_ribbon(data=Err1TATF_LSE.df, aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="grey70", alpha=0.3)
+	geom_line(data=Err1TATF.df, aes(x=NbNodes, y=avg, colour=factor(Method)), show.legend=FALSE)+
+	xlab("Number of nodes") + ylab("Average squared error") + ggtitle("Squared Error, k = 10%, TA = TF")   +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "ARACNE"="green", "TLR"="red","STEP"="black"))   +
+	geom_ribbon(data=Err1TATF_LSE.df, aes(x=NbNodes,  ymin=avg-sd, ymax=avg+sd), fill="grey70", 	 alpha=0.3) +
+	geom_ribbon(data=Err1TATF_STEP.df, aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="olivedrab2", alpha=0.3)	+
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
 dev.off()
 
 #	TA = 0		k = 0.5
 
 Err5TA0_MRA.df		<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean(Log)","MRA",2,1:8], 	  	sd=ErrorsM["sd(Log)","MRA",2,1:8], 		Method="MRA")
-Err5TA0_MRACLR.df	<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean(Log)","MRA_CLR",2,1:8], 	sd=ErrorsM["sd(Log)","MRA_CLR",2,1:8], 	Method="MRA-CLR")
-Err5TA0_ARAC.df		<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean(Log)","ARACNE",2,1:8], 	sd=ErrorsM["sd(Log)","ARACNE",2,1:8], 	Method="ARACNE")
+# Err5TA0_MRACLR.df	<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean(Log)","MRA_CLR",2,1:8], 	sd=ErrorsM["sd(Log)","MRA_CLR",2,1:8], 	Method="MRA-CLR")
+# Err5TA0_ARAC.df	<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean(Log)","ARACNE",2,1:8], 	sd=ErrorsM["sd(Log)","ARACNE",2,1:8], 	Method="ARACNE")
 Err5TA0_LSE.df		<- data.frame(NbNodes=NbNodes[1:8], avg=ErrorsM["mean(Log)","LSE",2,1:8], 	  	sd=ErrorsM["sd(Log)","LSE",2,1:8], 		Method="TLR")
 Err5TA0_STEP.df		<- data.frame(NbNodes=NbNodes[1:5], avg=ErrorsM["mean(Log)","STEP-Fo",2,1:5],	sd=ErrorsM["sd(Log)","STEP-Fo",2,1:5], 	Method="STEP")
-Err5TA0.df			<- rbind(Err5TA0_MRA.df, Err5TA0_MRACLR.df, Err5TA0_ARAC.df, Err5TA0_LSE.df, Err5TA0_STEP.df)
+Err5TA0.df			<- rbind(Err5TA0_MRA.df, Err5TA0_LSE.df, Err5TA0_STEP.df)
 
 NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Err5TA0.pdf", sep="")
-pdf(file=NomFic, height=10,width=10) 							# Sizes default to 7
+pdf(file=NomFic, height=6,width=3.5) 							# Sizes default to 7
+
 ggplot() + 
-	geom_line(data=Err5TA0.df, aes(x=NbNodes, y=avg, colour=factor(Method)))+
-	xlab("Number of nodes") + ylab("Log(1+Average quadratic error)") + ggtitle("Log(1+Quadratic Error), k = 0.5, TA = 0")+
-	scale_colour_manual(name="Method", values=c("MRA"="blue", "MRA-CLR"="orange", "ARACNE"="green", "TLR"="red", "STEP"="black"))+
-	geom_ribbon(data=Err5TA0_LSE.df, aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="grey70", alpha=0.3)
+	geom_line(data=Err5TA0.df, aes(x=NbNodes, y=avg, colour=factor(Method)), show.legend=FALSE)+
+	xlab("Number of nodes") + ylab("Log(1+Average squared error)") + ggtitle("Log(1+Sq. Error), k = 50%, TA = 0") +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "MRA-CLR"="orange", "ARACNE"="green", "TLR"="red", "STEP"="black")) +
+	geom_ribbon(data=Err5TA0_LSE.df,  aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="grey70", 	alpha=0.3) +
+	geom_ribbon(data=Err5TA0_STEP.df, aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="olivedrab2", alpha=0.3) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3.5 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
 dev.off()
 
 #	TF = TA		k = 0.5
 
 Err5TATF_MRA.df		<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean(Log)","MRA",2,9:15], 	 	sd=ErrorsM["sd(Log)","MRA",2,9:15], 		Method="MRA")
-Err5TATF_MRACLR.df	<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean(Log)","MRA_CLR",2,9:15], 	sd=ErrorsM["sd(Log)","MRA_CLR",2,9:15], 	Method="MRA-CLR")
-Err5TATF_ARAC.df	<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean(Log)","ARACNE",2,9:15], 		sd=ErrorsM["sd(Log)","ARACNE",2,9:15], 		Method="ARACNE")
+# Err5TATF_MRACLR.df<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean(Log)","MRA_CLR",2,9:15], 	sd=ErrorsM["sd(Log)","MRA_CLR",2,9:15], 	Method="MRA-CLR")
+# Err5TATF_ARAC.df	<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean(Log)","ARACNE",2,9:15], 		sd=ErrorsM["sd(Log)","ARACNE",2,9:15], 		Method="ARACNE")
 Err5TATF_LSE.df		<- data.frame(NbNodes=NbNodes[9:15], avg=ErrorsM["mean(Log)","LSE",2,9:15], 	  	sd=ErrorsM["sd(Log)","LSE",2,9:15], 		Method="TLR")
 Err5TATF_STEP.df	<- data.frame(NbNodes=NbNodes[9:11], avg=ErrorsM["mean(Log)","STEP-Fo",2,9:11], 	sd=ErrorsM["sd(Log)","STEP-Fo",2,9:11], 	Method="STEP")
-Err5TATF.df			<- rbind(Err5TATF_MRA.df, Err5TATF_MRACLR.df, Err5TATF_ARAC.df, Err5TATF_LSE.df, Err5TATF_STEP.df)
+Err5TATF.df			<- rbind(Err5TATF_MRA.df, Err5TATF_LSE.df, Err5TATF_STEP.df)
 
 NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Err5TATF.pdf", sep="")
-pdf(file=NomFic, height=10,width=10) 							# Sizes default to 7
+pdf(file=NomFic, height=6,width=3.5) 							# Sizes default to 7
+
 ggplot() + 
-	geom_line(data=Err5TATF.df, aes(x=NbNodes, y=avg, colour=factor(Method)))+
-	xlab("Number of nodes") + ylab("Log(1+Average quadratic error)") + ggtitle("Log(1+Quadratic Error), k = 0.5, TA = TF")+
-	scale_colour_manual(name="Method", values=c("MRA"="blue", "MRA-CLR"="orange", "ARACNE"="green", "TLR"="red", "STEP"="black"))+
-	geom_ribbon(data=Err5TATF_LSE.df, aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="grey70", alpha=0.3)
+	geom_line(data=Err5TATF.df, aes(x=NbNodes, y=avg, colour=factor(Method)), show.legend=FALSE) +
+	xlab("Number of nodes") + ylab("Log(1+Average squared error)") + ggtitle("Log(1+Sq. Error), k = 50%, TA = TF") +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "MRA-CLR"="orange", "ARACNE"="green", "TLR"="red", "STEP"="black")) +
+	geom_ribbon(data=Err5TATF_LSE.df,  aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="grey70", alpha=0.3) +
+	geom_ribbon(data=Err5TATF_STEP.df, aes(x=NbNodes, ymin=avg-sd, ymax=avg+sd), fill="olivedrab2", alpha=0.3) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3.5 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
 dev.off()
 
 
 #
 #	Fifth part : curves drawing (ROC curves)
+#	Supplementary Information Table 5
 #
+
+NbNodes			<- vector(length=NBSets)				# Number of nodes
 
 Seuils			<- seq(0, 1, by=0.05)					# To plot the curves ROC (MRA, MRA_CLR, TLR)
 NBSeuils		<- length(Seuils)
 
 Noises			<- c(0.1, 0.5)							# Error coefficients
 NBT				<- length(Noises)
-Methods			<- c("MRA", "MRA_CLR", "ARACNE", "LSE")			#, "STEP-Fo")
+#Methods			<- c("MRA", "MRA_CLR", "CLR", "ARACNE", "LSE", "TLR", "STEP-Fo")
+Methods			<- c("MRA", "LSE")
 NBM				<- length(Methods)
 
 ScoreTests		<-	c("TP", "TN", "FP", "FN", "Se", "Sp")		# Scores to measure (Se = "Sensibility", Sp = "Specificity", AUC = "AUROC")
 NBSC			<- length(ScoreTests)					# Nbr. of scores tested
 Score 			<- array(0, dim=c(NBSC, NBSeuils, NBM, NBT, NBTrials, NBSets))
 dimnames(Score)	<- list(ScoreTests, NULL, Methods, Noises, NULL, NULL)
-AUROC.tmp		<- array(0, dim=c(NBM, NBT, NBTrials, NBSets))
+AUROC.tmp		<- array(0, dim=c(NBM, NBT, NBTrials, NBSets))	
 AUROC 			<- array(0, dim=c(NBM, NBT, NBSets))
 dimnames(AUROC)	<- list(Methods, Noises, NULL)
+
+
+for (iSet in 1:NBSets) {
+	TF			<- as.numeric(FileNbr[iSet, 1])
+	TA			<- as.numeric(FileNbr[iSet, 2])
+	NBN			<- TF+TA
+	NbNodes[iSet]	<- NBN
+	
+	Solution	<-	array(dim=c(NBN, NBN))				# "Real" value of the solution
+	Solut1		<-	array(dim=c(NBN, NBN))				# Digitalized solution (0, 1)
+	MatrCc		<-  array(dim=c(NBN, NBN))				# "r" matrix computed, according to the method used
+	MatrCc1		<-  array(dim=c(NBN, NBN))				# Digitalized "r" matrix (0, 1)
+	
+		
+	for (iTrial in 1:NBTrials) {
+		val			<- paste(vRoot, "Donnees/", "Frank_TF", TF, "_TA", TA, "_", iTrial, "_Sol.csv", sep="")
+		Solution	<- as.matrix(read.csv(val))			# "Frank_TFxxx_TAyyy_z_Sol.csv"
+		Solut1		<- Digitalize(Solution, "Top", 0.15)	# We keep the 15% highest absolute values
+
+		for (iT in 1:NBT) {
+			Noise	<- 10*Noises[iT]
+			
+			for (iMeth in 1:NBM) {
+				Method	<- Methods[iMeth]
+				cat("TF ", TF, " TA ", TA, " Trial ", iTrial, " iT ", iT, " Method ", Method, " Time ", as.character(Sys.time()), "\n")
+				
+				val		<- paste(vRoot, "Resultats/", "Frank_TF", TF, "_TA", TA, "_", iTrial, "_Cc", Noise, "_", Method, ".csv", sep="")	
+				MatrCc	<- array(unlist(fread(val,data.table=F)),dim=c(NBN,NBN))	# "Frank_TFxxx_TAyyy_z_Cc1_MRA.csv"
+#				vMatrCc[]  	<- as.numeric(abs(MatrCc[]))		
+				
+				for (iSeuil in 1:NBSeuils) {
+					MatrCc1	 <- Digitalize(MatrCc, "Threshold", Seuils[iSeuil])
+
+#					if (Method %in% c("MRA", "MRA-CLR", "ARACNE")) {
+#						MatrCc1	 <- Digitalize(MatrCc, "Top", Seuils[iSeuil])
+#					} else {
+#						MatrCc1	 <- Digitalize(MatrCc, "Threshold", Seuils[iSeuil])
+#					}
+#
+					Score[ ,iSeuil,iMeth,iT,iTrial,iSet]	<- Benchmark(MatrCc1,Solut1)
+				}	# Loop on iSeuil
+					
+				AUROC.tmp[iMeth,iT,iTrial,iSet]	 <- abs(trapz((1-Score["Sp", ,iMeth,iT,iTrial,iSet]), Score["Se", ,iMeth,iT,iTrial,iSet]))# AUC ROC for the plotted methods	
+			}		# Loop on iMeth
+		}			# Loop on iT
+	}				# Loop on iTrial
+}					# Loop on iSet	
+cat("FIN Time ", as.character(Sys.time()), "\n")
+
+
+for (iSet in 1:NBSets) {
+	for (iT in 1:NBT) {
+		for (iMeth in 1:NBM) {
+			AUROC.tmp[iMeth,iT, ,iSet] 	<- ifelse(is.nan(AUROC.tmp[iMeth,iT, ,iSet]), 0.5, AUROC.tmp[iMeth,iT, ,iSet])
+			AUROC[iMeth,iT,iSet]		<- mean(AUROC.tmp[iMeth,iT, ,iSet])
+		}			# Loop on iMeth
+	}				# Loop on iT
+}					# Loop on iSet	
+
+
+# AUROC curves drawing: new Figure 6
+
+#	TA = 0		k = 0.5
+
+Auroc5TA0_MRA.df		<- data.frame(NbNodes=NbNodes[1:8], auroc=AUROC["MRA",2,1:8],		Method="MRA")
+# Auroc5TA0_MRACLR.df	<- data.frame(NbNodes=NbNodes[1:8], auroc=AUROC["MRA_CLR",2,1:8],	Method="MRA_CLR")
+Auroc5TA0_LSE.df		<- data.frame(NbNodes=NbNodes[1:8], auroc=AUROC["LSE",2,1:8],		Method="TLR")
+Auroc5TA0.df			<- rbind(Auroc5TA0_MRA.df, Auroc5TA0_LSE.df)
+
+NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Auroc5TA0.pdf", sep="")
+pdf(file=NomFic, height=6,width=3.5) 							# Sizes default to 7
+
+ggplot() + 
+	geom_line(data=Auroc5TA0.df, aes(x=NbNodes, y=auroc, colour=factor(Method)), show.legend=FALSE) +		# legend removed to get more space (2 figs. with the same caption, added with Inkscape)
+	xlab("Number of nodes") + ylab("AUROC") + ggtitle("Area under curve ROC, k = 50%, TA = 0") +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "TLR"="red")) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3.5 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
+dev.off()
+
+
+#	TA = TF		k = 0.5
+
+Auroc5TATF_MRA.df		<- data.frame(NbNodes=NbNodes[9:15], auroc=AUROC["MRA",2,9:15],		Method="MRA")
+# Auroc5TATF_MRACLR.df	<- data.frame(NbNodes=NbNodes[9:15], auroc=AUROC["MRA_CLR",2,9:15],	Method="MRA_CLR")
+Auroc5TATF_LSE.df		<- data.frame(NbNodes=NbNodes[9:15], auroc=AUROC["LSE",2,9:15],		Method="TLR")
+Auroc5TATF.df			<- rbind(Auroc5TATF_MRA.df, Auroc5TATF_LSE.df)
+
+NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Auroc5TATF.pdf", sep="")
+pdf(file=NomFic, height=6,width=3.6) 							# Sizes default to 7
+
+ggplot() + 
+	geom_line(data=Auroc5TATF.df, aes(x=NbNodes, y=auroc, colour=factor(Method)), show.legend=FALSE) +
+	xlab("Number of nodes") + ylab("AUROC") + ggtitle("Area under curve ROC, k = 50%, TA = TF") +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "TLR"="red")) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3.5 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
+dev.off()
+
+
+#
+#	Sixth part
+#	Se and Sp comparison (Reviewer 2 -- Major (1, 2 and 3))
+#	Supplementary Information Table 6
+#
+NbNodes			<- vector(length=NBSets)				# Number of nodes
+
+Noises			<- c(0.1, 0.5)							# Error coefficients
+NBT				<- length(Noises)
+Methods			<- c("MRA", "LSE_CI", "LASSO", "LSE", "STEP-Fo", "CLR", "MRA_CLR", "ARACNE", "MRNET")			# MRA-CLR
+NBM				<- length(Methods)
+
+ScoreTests		<-	c("TP", "TN", "FP", "FN", "Se", "Sp")		# Scores to measure (Se = "Sensibility", Sp = "Specificity", AUC = "AUROC")
+NBSC			<- length(ScoreTests)					# Nbr. of scores tested
+Score 			<- array(0, dim=c(NBSC, NBM, NBT, NBTrials, NBSets))
+dimnames(Score)	<- list(ScoreTests, Methods, Noises, NULL, NULL)
+ScoreM 			<- array(0, dim=c(2, NBM, NBT, NBSets))		# Average on the NBTrials files of the same size
+dimnames(ScoreM)<- list(c("Se","Sp"), Methods, Noises, NULL)
+FileScore		<- paste(vRoot, "Resultats/", "Frank_Scores.csv", sep="")
+DistM 			<- array(0, dim=c(NBM, NBT, NBSets))	# Distance to the first bisecting line of the point (Se, 1-Sp)
+dimnames(DistM) <- list(Methods, Noises, NULL)
 
 
 for (iSet in 1:NBSets) {
@@ -3420,75 +3801,185 @@ for (iSet in 1:NBSets) {
 
 		for (iT in 1:NBT) {
 			Noise	<- 10*Noises[iT]
+			cat("TF ", TF, " TA ", TA, " Trial ", iTrial, " iT ", iT)
 			
 			for (iMeth in 1:NBM) {
 				Method	<- Methods[iMeth]
-				cat("TF ", TF, " TA ", TA, " Trial ", iTrial, " iT ", iT, " Method ", Method, " Time ", as.character(Sys.time()), "\n")
+				# cat("TF ", TF, " TA ", TA, " Trial ", iTrial, " iT ", iT, " Method ", Method, " Time ", as.character(Sys.time()))
 				
 				val		<- paste(vRoot, "Resultats/", "Frank_TF", TF, "_TA", TA, "_", iTrial, "_Cc", Noise, "_", Method, ".csv", sep="")	
+				if (! file.exists(val)) {
+					Score[c("Se","Sp"),iMeth,iT,iTrial,iSet]	<- 0
+					cat("   SKIP \n")
+					next
+				}
+				
 				MatrCc	<- array(unlist(fread(val,data.table=F)),dim=c(NBN,NBN))	# "Frank_TFxxx_TAyyy_z_Cc1_MRA.csv"
 
-				for (iSeuil in 1:NBSeuils) {
-					MatrCc1	 <- Digitalize(MatrCc, "Threshold", Seuils[iSeuil])
+				if (Method == "MRA") {
+					MatrCc1	<- Digitalize(MatrCc, "Threshold", 0.25)
+				} else if (Method == "LSE_CI") {
+					MatrCc1	<- Digitalize(MatrCc, "Threshold", 0)				
+				} else if (Method == "LASSO") {
+					MatrCc1	<- Digitalize(MatrCc, "Threshold", 0)
+				} else if (Method == "LSE") {
+					MatrCc1	<- Digitalize(MatrCc, "Threshold", 0.25)			# TLR method
+				} else if (Method %in% c("STEP-Fo", "STEP-Ba")) {
+					MatrCc1	<- Digitalize(MatrCc, "Threshold", 0)
+				} else if (Method == "MRA_CLR") {
+					MatrCc1	<- Digitalize(MatrCc, "Threshold", 0)
+				} else if (Method %in% c("CLR", "ARACNE", "MRNET")) {				
+					MatrCc1	<- Digitalize(MatrCc, "Threshold", 0)
+				}
 
-#					if (Method %in% c("MRA", "MRA-CLR", "ARACNE")) {
-#						MatrCc1	 <- Digitalize(MatrCc, "Top", Seuils[iSeuil])
-#					} else {
-#						MatrCc1	 <- Digitalize(MatrCc, "Threshold", Seuils[iSeuil])
-#					}
-#
-					Score[ ,iSeuil,iMeth,iT,iTrial,iSet]	<- Benchmark(MatrCc1,Solut1)
-				}	# Loop on iSeuil
-				
-				AUROC.tmp[iMeth,iT,iTrial,iSet]	 <- -trapz((1-Score["Sp", ,iMeth,iT,iTrial,iSet]), Score["Se", ,iMeth,iT,iTrial,iSet])# AUC ROC for the plotted methods	
+				Score[ ,iMeth,iT,iTrial,iSet]	<- Benchmark(MatrCc1,Solut1)
+				cat(" Se ", Score["Se",iMeth,iT,iTrial,iSet], " Sp ", Score["Sp",iMeth,iT,iTrial,iSet], "\n")
 			}		# Loop on iMeth
 		}			# Loop on iT
 	}				# Loop on iTrial
 }					# Loop on iSet	
 cat("FIN Time ", as.character(Sys.time()), "\n")
 
+write.table(Noises[1], FileScore, sep=",")
+write.table(Score[ , ,1, ,], FileScore, append=TRUE, sep=",")				# Frank_Scores.csv
+write.table(Noises[2], FileScore, append=TRUE, sep=",")
+write.table(Score[ , ,2, ,], FileScore, append=TRUE, sep=",")
+
 
 for (iSet in 1:NBSets) {
+	TF			<- as.numeric(FileNbr[iSet, 1])
+	TA			<- as.numeric(FileNbr[iSet, 2])
+	
 	for (iT in 1:NBT) {
 		for (iMeth in 1:NBM) {
-			AUROC.tmp[iMeth,iT, ,iSet] 	<- ifelse(is.nan(AUROC.tmp[iMeth,iT, ,iSet]), 0.5, AUROC.tmp[iMeth,iT, ,iSet])
-			AUROC[iMeth,iT,iSet]		<- mean(AUROC.tmp[iMeth,iT, ,iSet])
+			Method	<- Methods[iMeth]
+			ScoreM["Se",iMeth,iT,iSet]	<- mean (Score["Se",iMeth,iT, ,iSet])
+			ScoreM["Sp",iMeth,iT,iSet]	<- mean (Score["Sp",iMeth,iT, ,iSet])
+			DistM[iMeth,iT,iSet]		<- -1*(1-ScoreM["Sp",iMeth,iT,iSet]) + 1*ScoreM["Se",iMeth,iT,iSet]	# dot product of (Se, 1-Sp) by (-1,1) = algebric distance to the first bisecting line
+			cat("TF ", TF, " TA ", TA, " Noise ", Noises[iT], " Method ", Method, " Se ", ScoreM["Se",iMeth,iT,iSet], " Sp ", ScoreM["Sp",iMeth,iT,iSet], "\n")
 		}			# Loop on iMeth
 	}				# Loop on iT
-}					# Loop on iSet	
+}					# Loop on iSet			
 
+write.table("Mean ", FileScore, append=TRUE, sep=",")
+write.table(Noises[1], FileScore, append=TRUE, sep=",")
+write.table(ScoreM[ , ,1, ], FileScore, append=TRUE, sep=",")				# Frank_Scores.csv
+write.table(Noises[2], FileScore, append=TRUE, sep=",")
+write.table(ScoreM[ , ,2, ], FileScore, append=TRUE, sep=",")
 
-# AUROC curves drawing
+# DISTANCE curves drawing: new Figure 7
 
-#	TA = 0		k = 0.5
+#	TA = 0		k = 0.1
 
-Auroc5TA0_MRA.df		<- data.frame(NbNodes=NbNodes[1:8], auroc=AUROC["MRA",2,1:8],		Method="MRA")
-#Auroc5TA0_MRACLR.df		<- data.frame(NbNodes=NbNodes[1:8], auroc=AUROC["MRA_CLR",2,1:8],	Method="MRA_CLR")
-Auroc5TA0_LSE.df		<- data.frame(NbNodes=NbNodes[1:8], auroc=AUROC["LSE",2,1:8],		Method="TLR")
-Auroc5TA0.df			<- rbind(Auroc5TA0_MRA.df, Auroc5TA0_LSE.df)
+Dist1TA0_MRA.df		<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["MRA",1,1:7],		Method="MRA")
+Dist1TA0_LSECI.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["LSE_CI",1,1:7],		Method="LSE_CI")
+Dist1TA0_LASSO.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["LASSO",1,1:7],		Method="LASSO")
+Dist1TA0_LSE.df		<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["LSE",1,1:7],		Method="TLR")
+Dist1TA0_STEPFo.df	<- data.frame(NbNodes=NbNodes[1:5], dist=DistM["STEP-Fo",1,1:5],	Method="STEP-Fo")
+Dist1TA0_CLR.df		<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["CLR",1,1:7],		Method="CLR")
+#Dist1TA0_MRACLR.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["MRA_CLR",1,1:7],	Method="MRA_CLR")
+Dist1TA0_ARACNE.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["ARACNE",1,1:7],		Method="ARACNE")
+Dist1TA0_MRNET.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["MRNET",1,1:7],		Method="MRNET")
 
-NomFic 	<- paste(vRoot, "FRANK_Auroc5TA0.pdf", sep="")
-pdf(file=NomFic, height=10,width=10) 							# Sizes default to 7
+Dist1TA0.df			<- rbind(Dist1TA0_MRA.df, Dist1TA0_LSECI.df, Dist1TA0_LASSO.df, Dist1TA0_LSE.df, Dist1TA0_STEPFo.df, Dist1TA0_CLR.df, Dist1TA0_ARACNE.df, Dist1TA0_MRNET.df)
+
+NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Dist1TA0.pdf", sep="")
+pdf(file=NomFic, height=6,width=3.5) 							# Sizes default to 7
+
 ggplot() + 
-	geom_line(data=Auroc5TA0.df, aes(x=NbNodes, y=auroc, colour=factor(Method)))+
-	xlab("Number of nodes") + ylab("AUROC") + ggtitle("Area under curve ROC, k = 0.5, TA = 0")+
-	scale_colour_manual(name="Method", values=c("MRA"="blue", "TLR"="red"))
+	geom_line(data=Dist1TA0.df, aes(x=NbNodes, y=dist, colour=factor(Method)), show.legend=FALSE) +		# legend removed to get more space (4 figs. with the same caption, added with Inkscape)
+	xlab("Number of nodes") + ylab("Distance") + ggtitle("Dist. to the diagonal, k = 10%, TA = 0") +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "LSE_CI"="black", "LASSO"="green", "TLR"="red", "STEP-Fo"="orange", "CLR"="darkorchid2", "MRA_CLR"="lightpink3", 
+												"ARACNE"="paleturquoise3", "MRNET"="grey75")) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3.5 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
 dev.off()
 
 
+#	TA = 0		k = 0.5
+
+Dist5TA0_MRA.df		<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["MRA",2,1:7],		Method="MRA")
+Dist5TA0_LSECI.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["LSE_CI",2,1:7],		Method="LSE_CI")
+Dist5TA0_LASSO.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["LASSO",2,1:7],		Method="LASSO")
+Dist5TA0_LSE.df		<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["LSE",2,1:7],		Method="TLR")
+Dist5TA0_STEPFo.df	<- data.frame(NbNodes=NbNodes[1:5], dist=DistM["STEP-Fo",2,1:5],	Method="STEP-Fo")
+Dist5TA0_CLR.df		<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["CLR",2,1:7],		Method="CLR")
+#Dist5TA0_MRACLR.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["MRA_CLR",2,1:7],	Method="MRA_CLR")
+Dist5TA0_ARACNE.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["ARACNE",2,1:7],		Method="ARACNE")
+Dist5TA0_MRNET.df	<- data.frame(NbNodes=NbNodes[1:7], dist=DistM["MRNET",2,1:7],		Method="MRNET")
+
+Dist5TA0.df			<- rbind(Dist5TA0_MRA.df, Dist5TA0_LSECI.df, Dist5TA0_LASSO.df, Dist5TA0_LSE.df, Dist5TA0_STEPFo.df, Dist5TA0_CLR.df, Dist5TA0_ARACNE.df, Dist5TA0_MRNET.df)
+
+NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Dist5TA0.pdf", sep="")
+pdf(file=NomFic, height=6,width=3.5) 							# Sizes default to 7
+
+ggplot() + 
+	geom_line(data=Dist5TA0.df, aes(x=NbNodes, y=dist, colour=factor(Method)), show.legend=FALSE) +
+	xlab("Number of nodes") + ylab("Distance") + ggtitle("Dist. to the diagonal, k = 50%, TA = 0") +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "LSE_CI"="black", "LASSO"="green", "TLR"="red", "STEP-Fo"="orange", "CLR"="darkorchid2", "MRA_CLR"="lightpink3", 
+												"ARACNE"="paleturquoise3", "MRNET"="grey75")) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3.5 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
+dev.off()
+
+#	TA = TF		k = 0.1
+
+Dist1TATF_MRA.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["MRA",1,9:13],		Method="MRA")
+Dist1TATF_LSECI.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["LSE_CI",1,9:13],	Method="LSE_CI")
+Dist1TATF_LASSO.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["LASSO",1,9:13],	Method="LASSO")
+Dist1TATF_LSE.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["LSE",1,9:13],		Method="TLR")
+Dist1TATF_STEPFo.df	<- data.frame(NbNodes=NbNodes[9:11], dist=DistM["STEP-Fo",1,9:11],	Method="STEP-Fo")
+Dist1TATF_CLR.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["CLR",1,9:13],		Method="CLR")
+# Dist1TATF_MRACLR.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["MRA_CLR",1,9:13],	Method="MRA_CLR")
+Dist1TATF_ARACNE.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["ARACNE",1,9:13],	Method="ARACNE")
+Dist1TATF_MRNET.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["MRNET",1,9:13],	Method="MRNET")
+
+Dist1TATF.df		<- rbind(Dist1TATF_MRA.df, Dist1TATF_LSECI.df, Dist1TATF_LASSO.df, Dist1TATF_LSE.df, Dist1TATF_STEPFo.df, Dist1TATF_CLR.df, Dist1TATF_ARACNE.df, Dist1TATF_MRNET.df)
+
+NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Dist1TATF.pdf", sep="")
+pdf(file=NomFic, height=6,width=3.5) 							# Sizes default to 7
+
+ggplot() + 
+	geom_line(data=Dist1TATF.df, aes(x=NbNodes, y=dist, colour=factor(Method)), show.legend=FALSE) +
+	xlab("Number of nodes") + ylab("Distance") + ggtitle("Dist. to the diagonal, k = 10%, TA = TF") +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "LSE_CI"="black", "LASSO"="green", "TLR"="red", "STEP-Fo"="orange", "CLR"="darkorchid2", "MRA_CLR"="lightpink3", 
+												"ARACNE"="paleturquoise3", "MRNET"="grey75")) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3.5 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
+dev.off()
+
 #	TA = TF		k = 0.5
 
-Auroc5TATF_MRA.df		<- data.frame(NbNodes=NbNodes[9:15], auroc=AUROC["MRA",2,9:15],		Method="MRA")
-#Auroc5TATF_MRACLR.df	<- data.frame(NbNodes=NbNodes[9:15], auroc=AUROC["MRA_CLR",2,9:15],	Method="MRA_CLR")
-Auroc5TATF_LSE.df		<- data.frame(NbNodes=NbNodes[9:15], auroc=AUROC["LSE",2,9:15],		Method="TLR")
-Auroc5TATF.df			<- rbind(Auroc5TATF_MRA.df, Auroc5TATF_LSE.df)
+Dist5TATF_MRA.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["MRA",2,9:13],		Method="MRA")
+Dist5TATF_LSECI.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["LSE_CI",2,9:13],	Method="LSE_CI")
+Dist5TATF_LASSO.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["LASSO",2,9:13],	Method="LASSO")
+Dist5TATF_LSE.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["LSE",2,9:13],		Method="TLR")
+Dist5TATF_STEPFo.df	<- data.frame(NbNodes=NbNodes[9:11], dist=DistM["STEP-Fo",2,9:11],	Method="STEP-Fo")
+Dist5TATF_CLR.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["CLR",2,9:13],		Method="CLR")
+# Dist5TATF_MRACLR.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["MRA_CLR",2,9:13],	Method="MRA_CLR")
+Dist5TATF_ARACNE.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["ARACNE",2,9:13],	Method="ARACNE")
+Dist5TATF_MRNET.df	<- data.frame(NbNodes=NbNodes[9:13], dist=DistM["MRNET",2,9:13],	Method="MRNET")
 
-NomFic 	<- paste(vRoot, "FRANK_Auroc5TATF.pdf", sep="")
-pdf(file=NomFic, height=10,width=10) 							# Sizes default to 7
+Dist5TATF.df		<- rbind(Dist5TATF_MRA.df, Dist5TATF_LSECI.df, Dist5TATF_LASSO.df, Dist5TATF_LSE.df, Dist5TATF_STEPFo.df, Dist5TATF_CLR.df, Dist5TATF_ARACNE.df, Dist5TATF_MRNET.df)
+
+NomFic 	<- paste(vRoot, "Resultats/", "FRANK_Dist5TATF.pdf", sep="")
+pdf(file=NomFic, height=6,width=3.5) 							# Sizes default to 7
+
 ggplot() + 
-	geom_line(data=Auroc5TATF.df, aes(x=NbNodes, y=auroc, colour=factor(Method)))+
-	xlab("Number of nodes") + ylab("AUROC") + ggtitle("Area under curve ROC, k = 0.5, TA = TF")+
-	scale_colour_manual(name="Method", values=c("MRA"="blue", "TLR"="red"))
+	geom_line(data=Dist5TATF.df, aes(x=NbNodes, y=dist, colour=factor(Method)), show.legend=FALSE) +
+	xlab("Number of nodes") + ylab("Distance") + ggtitle("Dist. to the diagonal, k = 50%, TA = TF") +
+	scale_colour_manual(name="Method", values=c("MRA"="blue", "LSE_CI"="black", "LASSO"="green", "TLR"="red", "STEP-Fo"="orange", "CLR"="darkorchid2", "MRA_CLR"="lightpink3", 
+												"ARACNE"="paleturquoise3", "MRNET"="grey75")) +
+	theme(axis.text.x = element_text(color="black")) +
+	theme(axis.text.y = element_text(color="black")) +
+	theme(text = element_text(size = 10))					# width = 3.5 (4x8 cm) vs size = 13 width = 6 (8x8 cm)
+	
 dev.off()
 
 
@@ -3507,12 +3998,14 @@ dev.off()
 
 vRoot		<- c("/home/jpborg/Documents/Publications/BioInformatics/MRA_Regression_ed1/Vers_Rev1/Donnees/FRANK2/")
 
-Methods		<- c("MRA", "LSE", "TLR", "STEP-Fo", "ARACNE")
+#Methods		<- c("MRA", "LSE", "TLR", "STEP-Fo", "ARACNE")
+#Methods		<- c("MRA", "MRA-CLR", "LSE", "STEP-Fo", "ARACNE")			# stocké ainsi
+Methods		<- c("MRA", "MRA_CLR", "ARACNE", "LSE",  "STEP-Fo")
 NBM			<- length(Methods)							# Nbr of methods to test
 
 ErrorQ		<- array(0, dim=c(NBM, NBT, NBTrials, NBSets))				# Quadratic error, as a function of noise level and method used
 rownames(ErrorQ)	<- c(Methods)
-FileErrorQ	<- paste(vRoot, "Resultats/", "Frank_ErrorQ1.csv", sep="")
+FileErrorQ	<- paste(vRoot, "Resultats/", "Frank_ErrorQ3.csv", sep="")
 
 cat("DEBUT Time ", as.character(Sys.time()), "\n")
 
